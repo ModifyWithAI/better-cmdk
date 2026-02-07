@@ -32,7 +32,11 @@ export type MessageContentProps = Omit<
     "className"
 >
 
-export function MessageContent({ children, style, ...props }: MessageContentProps & { style?: CSSProperties }) {
+export function MessageContent({
+    children,
+    style,
+    ...props
+}: MessageContentProps & { style?: CSSProperties }) {
     return (
         <div
             data-slot="message-content"
@@ -41,7 +45,7 @@ export function MessageContent({ children, style, ...props }: MessageContentProp
                 "group-[.is-user]:ml-auto group-[.is-user]:bg-secondary group-[.is-user]:px-4 group-[.is-user]:py-3 group-[.is-user]:text-foreground",
                 "group-[.is-assistant]:text-foreground",
             )}
-            style={{ borderRadius: 'var(--cmdk-radius, 0.5rem)', ...style }}
+            style={{ borderRadius: "var(--cmdk-radius, 0.5rem)", ...style }}
             {...props}
         >
             {children}

@@ -1,9 +1,9 @@
 "use client"
 
+import { flatToTree } from "@json-render/react"
 import type { UIMessage } from "ai"
 import * as React from "react"
 import { z } from "zod"
-import { flatToTree } from "@json-render/react"
 import {
     Confirmation,
     ConfirmationAccepted,

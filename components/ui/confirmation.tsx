@@ -45,7 +45,12 @@ export type ConfirmationProps = Omit<ComponentProps<"div">, "className"> & {
     state: ToolUIPart["state"]
 }
 
-export function Confirmation({ approval, state, style, ...props }: ConfirmationProps & { style?: CSSProperties }) {
+export function Confirmation({
+    approval,
+    state,
+    style,
+    ...props
+}: ConfirmationProps & { style?: CSSProperties }) {
     if (
         !approval ||
         state === "input-streaming" ||
@@ -62,7 +67,7 @@ export function Confirmation({ approval, state, style, ...props }: ConfirmationP
                 data-approved={approval?.approved}
                 role="alertdialog"
                 aria-labelledby="confirmation-title"
-                style={{ borderRadius: 'var(--cmdk-radius, 0.5rem)', ...style }}
+                style={{ borderRadius: "var(--cmdk-radius, 0.5rem)", ...style }}
                 className={cn(
                     "flex flex-col gap-2 border p-4",
                     "data-[state=approval-requested]:border-amber-500/50 data-[state=approval-requested]:bg-amber-50/50 dark:data-[state=approval-requested]:bg-amber-950/20",
@@ -178,7 +183,7 @@ export function ConfirmationAction({
                 variant === "destructive" &&
                     "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
             )}
-            style={{ borderRadius: 'var(--cmdk-radius, 0.375rem)', ...style }}
+            style={{ borderRadius: "var(--cmdk-radius, 0.375rem)", ...style }}
             {...props}
         />
     )

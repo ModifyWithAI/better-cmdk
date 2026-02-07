@@ -3,6 +3,7 @@
 import type { ToolUIPart } from "ai"
 import {
     type ComponentProps,
+    type CSSProperties,
     createContext,
     type ReactNode,
     useContext,
@@ -44,7 +45,7 @@ export type ConfirmationProps = Omit<ComponentProps<"div">, "className"> & {
     state: ToolUIPart["state"]
 }
 
-export function Confirmation({ approval, state, ...props }: ConfirmationProps) {
+export function Confirmation({ approval, state, style, ...props }: ConfirmationProps & { style?: CSSProperties }) {
     if (
         !approval ||
         state === "input-streaming" ||
@@ -61,8 +62,9 @@ export function Confirmation({ approval, state, ...props }: ConfirmationProps) {
                 data-approved={approval?.approved}
                 role="alertdialog"
                 aria-labelledby="confirmation-title"
+                style={{ borderRadius: 'var(--cmdk-radius, 0.5rem)', ...style }}
                 className={cn(
-                    "flex flex-col gap-2 rounded-lg border p-4",
+                    "flex flex-col gap-2 border p-4",
                     "data-[state=approval-requested]:border-amber-500/50 data-[state=approval-requested]:bg-amber-50/50 dark:data-[state=approval-requested]:bg-amber-950/20",
                     "data-[approved=true]:border-green-500/50 data-[approved=true]:bg-green-50/50 dark:data-[approved=true]:bg-green-950/20",
                     "data-[approved=false]:border-red-500/50 data-[approved=false]:bg-red-50/50 dark:data-[approved=false]:bg-red-950/20",
@@ -157,15 +159,16 @@ export type ConfirmationActionProps = Omit<
 
 export function ConfirmationAction({
     variant = "default",
+    style,
     ...props
-}: ConfirmationActionProps) {
+}: ConfirmationActionProps & { style?: CSSProperties }) {
     return (
         <button
             data-slot="confirmation-action"
             data-variant={variant}
             type="button"
             className={cn(
-                "inline-flex h-8 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors",
+                "inline-flex h-8 items-center justify-center gap-2 whitespace-nowrap px-3 text-sm font-medium transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "disabled:pointer-events-none disabled:opacity-50",
                 variant === "default" &&
@@ -175,6 +178,7 @@ export function ConfirmationAction({
                 variant === "destructive" &&
                     "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
             )}
+            style={{ borderRadius: 'var(--cmdk-radius, 0.375rem)', ...style }}
             {...props}
         />
     )

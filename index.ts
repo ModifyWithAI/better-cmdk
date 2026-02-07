@@ -1,10 +1,6 @@
 export {
   Command,
-  CommandDialog,
   CommandDialogContent,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandShortcut,
@@ -31,18 +27,21 @@ export { cn } from "./lib/utils"
 // Command Menu components
 export {
   CommandMenu,
-  CommandMenuContent,
-  CommandMenuInput,
-  CommandMenuEmpty,
-  CommandMenuList,
+  CommandMenu as CommandDialog,
+  CommandContent,
+  CommandInput,
+  CommandEmpty,
+  CommandList,
 } from "./components/ui/command-menu"
 export type {
   CommandMenuProps,
-  CommandMenuInputProps,
-  CommandMenuEmptyProps,
-  CommandMenuListProps,
+  CommandMenuCorners,
+  CommandInputProps,
+  CommandEmptyProps,
+  CommandListProps,
   CommandAction,
   CommandActionOption,
+  CommandDefinition,
 } from "./components/ui/command-menu"
 
 // Chat components
@@ -138,3 +137,11 @@ export type {
   CommandMenuProviderProps,
   ExternalChat,
 } from "./context/command-menu-context"
+
+// Chat history
+export { useChatHistory } from "./hooks/use-chat-history"
+export type {
+  ChatConversation,
+  UseChatHistoryOptions,
+  UseChatHistoryReturn,
+} from "./hooks/use-chat-history"

@@ -35,11 +35,12 @@ function ChatMessage({
     >
       <div
         className={cn(
-          "inline-block max-w-[85%] rounded-lg px-3 py-2 text-sm",
+          "inline-block max-w-[85%] px-3 py-2 text-sm",
           isUser
             ? "bg-primary text-primary-foreground"
             : "bg-muted text-foreground"
         )}
+        style={{ borderRadius: 'var(--cmdk-radius, 0.5rem)' }}
       >
         <p className="whitespace-pre-wrap break-words">{content}</p>
       </div>

@@ -4,6 +4,8 @@ import * as React from "react"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
 import type { CommandAction } from "../components/ui/command-menu"
+import { useChatHistory, type ChatConversation } from "../hooks/use-chat-history"
+import { initTelemetry, captureException, startSpan } from "../lib/telemetry"
 
 export type CommandMenuMode = "command" | "chat"
 
@@ -11,11 +13,14 @@ export type CommandMenuStatus = "idle" | "submitted" | "streaming" | "error"
 
 export interface ExternalChat {
   messages: UIMessage[]
+  setMessages?: (
+    messages: UIMessage[] | ((msgs: UIMessage[]) => UIMessage[])
+  ) => void
   sendMessage: (message: { text: string }) => void
   status: "ready" | "submitted" | "streaming" | "error"
   error: Error | null
   addToolApprovalResponse?: (response: { id: string; approved: boolean }) => void
-  availableActions?: CommandAction[]
+  agenticActions?: CommandAction[]
 }
 
 export interface CommandMenuContextValue {
@@ -34,8 +39,13 @@ export interface CommandMenuContextValue {
   isLoading: boolean
   isEnabled: boolean
   addToolApprovalResponse?: (response: { id: string; approved: boolean }) => void
-  availableActions?: CommandAction[]
+  agenticActions?: CommandAction[]
   requestClose?: () => void
+  // Chat history
+  conversations: ChatConversation[]
+  currentConversationId: string | null
+  startNewChat: () => void
+  loadConversation: (id: string) => void
 }
 
 const CommandMenuContext = React.createContext<CommandMenuContextValue | null>(null)
@@ -46,6 +56,8 @@ export interface CommandMenuProviderProps {
   chat?: ExternalChat
   onModeChange?: (mode: CommandMenuMode) => void
   onOpenChange?: (open: boolean) => void
+  historyStorageKey?: string
+  maxConversations?: number
 }
 
 const emptyMessages: UIMessage[] = []
@@ -56,6 +68,8 @@ export function CommandMenuProvider({
   chat: externalChat,
   onModeChange,
   onOpenChange,
+  historyStorageKey,
+  maxConversations,
 }: CommandMenuProviderProps) {
   const [mode, setModeInternal] = React.useState<CommandMenuMode>("command")
   const [inputValue, setInputValue] = React.useState("")
@@ -71,6 +85,10 @@ export function CommandMenuProvider({
 
   const hasExternalChat = Boolean(externalChat)
 
+  React.useEffect(() => {
+    initTelemetry()
+  }, [])
+
   const transport = React.useMemo(() => {
     if (hasExternalChat || !chatEndpoint) return undefined
     return new DefaultChatTransport({ api: chatEndpoint })
@@ -82,6 +100,7 @@ export function CommandMenuProvider({
         ? {
             transport,
             onError: (err: Error) => {
+              captureException(err, { source: "internalChat.onError" })
               setStatus("error")
               setError(err)
             },
@@ -125,10 +144,12 @@ export function CommandMenuProvider({
   const switchToChat = React.useCallback(
     (initialQuery?: string) => {
       if (!isEnabled) return
-      setMode("chat")
-      if (initialQuery) {
-        setInputValue(initialQuery)
-      }
+      startSpan("switchToChat", "ui.action", () => {
+        setMode("chat")
+        if (initialQuery) {
+          setInputValue(initialQuery)
+        }
+      })
     },
     [isEnabled, setMode]
   )
@@ -143,16 +164,23 @@ export function CommandMenuProvider({
   const sendMessage = React.useCallback(
     async (content: string) => {
       if (!content.trim()) return
-      const ext = externalChatRef.current
-      if (ext) {
-        setInputValue("")
-        ext.sendMessage({ text: content.trim() })
-        return
-      }
-      if (!transport) return
-      setStatus("submitted")
-      setInputValue("")
-      await internalChat.sendMessage({ text: content.trim() })
+      await startSpan("sendMessage", "function", async () => {
+        try {
+          const ext = externalChatRef.current
+          if (ext) {
+            setInputValue("")
+            ext.sendMessage({ text: content.trim() })
+            return
+          }
+          if (!transport) return
+          setStatus("submitted")
+          setInputValue("")
+          await internalChat.sendMessage({ text: content.trim() })
+        } catch (err) {
+          captureException(err, { source: "sendMessage" })
+          throw err
+        }
+      })
     },
     [internalChat, transport]
   )
@@ -163,8 +191,43 @@ export function CommandMenuProvider({
     ? externalChat.messages
     : (internalChat.messages ?? emptyMessages)
 
+  // Resolve setMessages from external or internal chat
+  const resolvedSetMessages = externalChat?.setMessages ?? internalChat.setMessages
+
   const addToolApprovalResponse = externalChat?.addToolApprovalResponse
-  const availableActions = externalChat?.availableActions
+  const agenticActions = externalChat?.agenticActions
+
+  // Chat history
+  const chatHistory = useChatHistory({
+    storageKey: historyStorageKey,
+    maxConversations,
+    messages,
+    setMessages: resolvedSetMessages,
+  })
+
+  // Wrap loadConversation to also switch to chat mode
+  const loadConversation = React.useCallback(
+    (id: string) => {
+      chatHistory.loadConversation(id)
+      setMode("chat")
+    },
+    [chatHistory.loadConversation, setMode]
+  )
+
+  // Auto-save: when status transitions from streaming/submitted → idle with messages
+  const prevStatusRef = React.useRef(status)
+  React.useEffect(() => {
+    const prevStatus = prevStatusRef.current
+    prevStatusRef.current = status
+
+    if (
+      (prevStatus === "streaming" || prevStatus === "submitted") &&
+      status === "idle" &&
+      messages.length > 0
+    ) {
+      chatHistory.saveCurrentConversation()
+    }
+  }, [status, messages.length, chatHistory.saveCurrentConversation])
 
   const requestClose = React.useCallback(() => {
     onOpenChange?.(false)
@@ -186,8 +249,12 @@ export function CommandMenuProvider({
       isLoading,
       isEnabled,
       addToolApprovalResponse,
-      availableActions,
+      agenticActions,
       requestClose,
+      conversations: chatHistory.conversations,
+      currentConversationId: chatHistory.currentConversationId,
+      startNewChat: chatHistory.startNewChat,
+      loadConversation,
     }),
     [
       mode,
@@ -203,8 +270,12 @@ export function CommandMenuProvider({
       isLoading,
       isEnabled,
       addToolApprovalResponse,
-      availableActions,
+      agenticActions,
       requestClose,
+      chatHistory.conversations,
+      chatHistory.currentConversationId,
+      chatHistory.startNewChat,
+      loadConversation,
     ]
   )
 

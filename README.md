@@ -72,18 +72,147 @@ Add the required CSS variables to your global styles:
 
 ## Usage
 
+The recommended way to use better-cmdk is with the declarative `commands` prop. Define your commands as data and let the component handle rendering, grouping, and search.
+
+```tsx
+"use client";
+
+import { useState, useEffect } from "react";
+import { CalendarIcon, SearchIcon, UserIcon, SettingsIcon } from "lucide-react";
+import { CommandMenu, type CommandDefinition } from "better-cmdk";
+
+const commands: CommandDefinition[] = [
+  {
+    name: "calendar",
+    label: "Calendar",
+    icon: <CalendarIcon className="size-4" />,
+    group: "Suggestions",
+    onSelect: () => console.log("Calendar selected"),
+  },
+  {
+    name: "search",
+    label: "Search",
+    icon: <SearchIcon className="size-4" />,
+    group: "Suggestions",
+    onSelect: () => console.log("Search selected"),
+  },
+  {
+    name: "profile",
+    label: "Profile",
+    icon: <UserIcon className="size-4" />,
+    group: "Settings",
+    shortcut: "⌘P",
+    onSelect: () => console.log("Profile selected"),
+  },
+  {
+    name: "settings",
+    label: "Settings",
+    icon: <SettingsIcon className="size-4" />,
+    group: "Settings",
+    shortcut: "⌘S",
+    onSelect: () => console.log("Settings selected"),
+  },
+];
+
+export function CommandPalette() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
+
+  return (
+    <CommandMenu
+      open={open}
+      onOpenChange={setOpen}
+      commands={commands}
+      commandsPlaceholder="Search or ask AI..."
+    />
+  );
+}
+```
+
+### CommandDefinition
+
+Each command in the `commands` array supports:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `string` | **Required.** Unique key used for search matching |
+| `label` | `string` | Display text (falls back to `name`) |
+| `group` | `string` | Group heading — commands with the same group appear together |
+| `icon` | `ReactNode` | Icon rendered before the label |
+| `shortcut` | `string` | Keyboard shortcut hint (right-aligned) |
+| `keywords` | `string[]` | Extra search terms |
+| `disabled` | `boolean` | Grayed out, not selectable |
+| `onSelect` | `() => void` | Called when the command is selected |
+
+### CommandMenu Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `commands` | `CommandDefinition[]` | — | Declarative command definitions |
+| `commandsPlaceholder` | `string` | `"Search or ask AI..."` | Input placeholder |
+| `commandsAskAILabel` | `string` | `"Ask AI"` | Label for the AI trigger |
+| `open` | `boolean` | — | Controlled open state |
+| `onOpenChange` | `(open: boolean) => void` | — | Open state callback |
+| `corners` | `"none" \| "sm" \| "md" \| "lg" \| "xl"` | `"xl"` | Border radius |
+| `borderColor` | `string` | — | Custom ring color |
+| `chatEndpoint` | `string` | — | API endpoint for built-in AI chat |
+| `chat` | `ExternalChat` | — | External chat integration |
+| `onModeChange` | `(mode: CommandMenuMode) => void` | — | Fires when switching between command/chat |
+| `historyStorageKey` | `string` | — | localStorage key for chat history |
+| `maxConversations` | `number` | — | Max saved chat conversations |
+
+### AI Chat
+
+Enable the built-in AI chat by providing either a `chatEndpoint` or an external `chat` object:
+
+```tsx
+// Built-in chat with an API endpoint
+<CommandMenu
+  commands={commands}
+  chatEndpoint="/api/chat"
+  open={open}
+  onOpenChange={setOpen}
+/>
+
+// External chat integration (e.g. Vercel AI SDK useChat)
+<CommandMenu
+  commands={commands}
+  chat={externalChat}
+  open={open}
+  onOpenChange={setOpen}
+/>
+```
+
+Users can switch to chat mode via `⌘ Enter` or by selecting the "Ask AI" item.
+
+## Advanced: Custom Children
+
+For full control over the command list rendering, you can pass children instead of `commands`. This approach is compatible with shadcn/ui patterns if you're migrating from an existing setup.
+
+> **Note:** When both `commands` and `children` are provided, `commands` takes precedence.
+
 ```tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import {
-  CommandDialog,
+  CommandMenu,
+  CommandInput,
+  CommandList,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
-  CommandList,
-  CommandSeparator,
   CommandShortcut,
 } from "better-cmdk";
 
@@ -103,10 +232,9 @@ export function CommandPalette() {
   }, []);
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search..." />
+    <CommandMenu open={open} onOpenChange={setOpen}>
+      <CommandInput placeholder="Type a command or search..." showSendButton />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Suggestions">
           <CommandItem>
             <span>Calendar</span>
@@ -115,7 +243,6 @@ export function CommandPalette() {
             <span>Search</span>
           </CommandItem>
         </CommandGroup>
-        <CommandSeparator />
         <CommandGroup heading="Settings">
           <CommandItem>
             <span>Profile</span>
@@ -126,97 +253,28 @@ export function CommandPalette() {
             <CommandShortcut>⌘S</CommandShortcut>
           </CommandItem>
         </CommandGroup>
+        <CommandEmpty />
       </CommandList>
-    </CommandDialog>
+    </CommandMenu>
   );
 }
 ```
 
-## Components
+### Render Props
 
-### CommandDialog
-
-The main dialog wrapper. Opens as a modal command palette.
+Children can also be a function to access internal state:
 
 ```tsx
-<CommandDialog
-  open={open}
-  onOpenChange={setOpen}
-  title="Command Palette" // optional, for accessibility
-  description="Search commands" // optional, for accessibility
->
-  {children}
-</CommandDialog>
-```
-
-### CommandInput
-
-Search input with built-in search icon.
-
-```tsx
-<CommandInput placeholder="Search..." />
-```
-
-### CommandList
-
-Scrollable container for command items.
-
-```tsx
-<CommandList>{children}</CommandList>
-```
-
-### CommandGroup
-
-Groups related commands with an optional heading.
-
-```tsx
-<CommandGroup heading="Actions">{children}</CommandGroup>
-```
-
-### CommandItem
-
-Individual selectable command item.
-
-```tsx
-<CommandItem onSelect={() => console.log("Selected!")}>
-  <Icon className="mr-2 h-4 w-4" />
-  <span>Label</span>
-</CommandItem>
-```
-
-### CommandShortcut
-
-Displays keyboard shortcut hints.
-
-```tsx
-<CommandShortcut>⌘K</CommandShortcut>
-```
-
-### CommandSeparator
-
-Visual separator between groups.
-
-```tsx
-<CommandSeparator />
-```
-
-### CommandEmpty
-
-Shown when no results match the search.
-
-```tsx
-<CommandEmpty>No results found.</CommandEmpty>
-```
-
-## Subpath Exports
-
-Import specific components directly:
-
-```tsx
-import { Command, CommandDialog } from "better-cmdk/command";
-import { Dialog, DialogContent } from "better-cmdk/dialog";
-import { Button } from "better-cmdk/button";
-import { cn } from "better-cmdk/utils";
+<CommandMenu open={open} onOpenChange={setOpen}>
+  {({ mode, messages, status, isEnabled }) => (
+    <>
+      <CommandInput placeholder="Search..." showSendButton />
+      <CommandList>
+        {/* Custom rendering based on mode/status */}
+      </CommandList>
+    </>
+  )}
+</CommandMenu>
 ```
 
 ## Styling

@@ -81,6 +81,7 @@ export {
     AssistantFormRenderer,
     defaultFormRegistry,
 } from "./components/ui/form-renderer"
+export { Kbd, KbdGroup } from "./components/ui/kbd"
 export type {
     MessageContentProps,
     MessageProps,

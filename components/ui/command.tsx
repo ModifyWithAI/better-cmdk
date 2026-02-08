@@ -13,6 +13,7 @@ import {
     DialogPortal,
     DialogTitle,
 } from "./dialog"
+import { Kbd } from "./kbd"
 
 function Command({
     className,
@@ -180,17 +181,19 @@ function CommandItem({
 
 function CommandShortcut({
     className,
+    children,
     ...props
 }: React.ComponentProps<"span">) {
+    const keys = typeof children === "string" ? [...children] : null
+
     return (
         <span
             data-slot="command-shortcut"
-            className={cn(
-                "text-muted-foreground ml-auto text-xs tracking-widest",
-                className,
-            )}
+            className={cn("ml-auto flex items-center gap-1", className)}
             {...props}
-        />
+        >
+            {keys ? keys.map((key, i) => <Kbd key={i}>{key}</Kbd>) : children}
+        </span>
     )
 }
 

@@ -29,6 +29,7 @@ import {
     CommandShortcut,
     CommandEmpty as ShadcnCommandEmpty,
 } from "./command"
+import { Kbd } from "./kbd"
 import {
     Dialog,
     DialogDescription,
@@ -423,6 +424,10 @@ function CommandEmpty({
                 <div className="flex flex-col items-start gap-0.5">
                     <span className="font-medium">{label}</span>
                 </div>
+                <span className="ml-auto flex items-center gap-1">
+                    <Kbd>⌘</Kbd>
+                    <Kbd>↵</Kbd>
+                </span>
             </CommandPrimitive.Item>
         </CommandPrimitive.Group>
     )
@@ -707,7 +712,8 @@ function CommandList({
                     {conversations.slice(0, 5).map((convo) => (
                         <CommandItem
                             key={convo.id}
-                            value={`chat-history-${convo.title}`}
+                            value={`chat-history-${convo.id}`}
+                            keywords={[convo.title]}
                             onSelect={() => loadConversation(convo.id)}
                         >
                             <MessageCircleIcon className="size-4" />

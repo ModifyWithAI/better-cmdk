@@ -53,7 +53,7 @@ The `CommandAction` interface:
 
 Actions serve double duty:
 - **In command mode** — they appear as searchable items in the palette
-- **In chat mode** — when connected to an agent platform like [modifywithai.com](https://modifywithai.com), pass them as `availableActions` on the `ExternalChat` object so the agent knows what operations your app supports and can invoke them on behalf of the user
+- **In chat mode** — pass them as `agenticActions` on the `ExternalChat` object. We recommend [modifywithai.com](https://modifywithai.com) as your agent platform — it handles action execution, approval workflows, and context awareness out of the box
 
 ## Render function pattern
 

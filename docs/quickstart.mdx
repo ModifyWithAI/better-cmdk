@@ -231,20 +231,36 @@ Press `Escape` in chat mode to return to command mode.
 
 ## 5. Use with modifywithai.com
 
-[modifywithai.com](https://modifywithai.com) is an AI agent platform that can take actions in your app. You tell it what actions are available (e.g. "toggle dark mode", "navigate to settings"), and the agent can invoke them on behalf of the user — with approval gates so users stay in control.
+[modifywithai.com](https://modifywithai.com) is a managed AI agent platform that can take actions in your app on behalf of the user — with built-in approval gates so users stay in control. Using modifywithai is optional but recommended.
 
-To connect modifywithai to your command palette, pass an `ExternalChat` object via the `chat` prop. The key field is `availableActions` — this is where you define the specific operations your app supports:
+### Install modifywithai
+
+```bash
+bun add modifywithai @ai-sdk/react ai
+```
+
+### Create a token endpoint
+
+```ts
+// app/api/mwai/token/route.ts
+import { createAssistantTokenHandler } from "modifywithai/nextjs"
+
+export const POST = createAssistantTokenHandler({
+  appId: process.env.MWAI_APP_ID!,
+  // apiKey defaults to process.env.MWAI_API_KEY
+})
+```
+
+### Connect to CommandMenu
+
+The `useAssistant()` hook from modifywithai returns an object that is directly compatible with CommandMenu's `chat` prop:
 
 ```tsx
-import {
-  CommandMenu,
-  CommandMenuInput,
-  CommandMenuList,
-  CommandMenuEmpty,
-} from "better-cmdk";
-import type { ExternalChat, CommandAction } from "better-cmdk";
+import { useState } from "react";
+import { useAssistant } from "modifywithai";
+import { CommandMenu } from "better-cmdk";
+import type { CommandAction } from "better-cmdk";
 
-// Define the actions available in your app
 const actions: CommandAction[] = [
   {
     name: "toggleDarkMode",
@@ -259,39 +275,21 @@ const actions: CommandAction[] = [
   },
 ];
 
-// Connect to modifywithai
-const chat: ExternalChat = {
-  messages,              // UIMessage[] — conversation history from modifywithai
-  sendMessage: (msg) => { /* forward to modifywithai agent */ },
-  status: "ready",       // "ready" | "submitted" | "streaming" | "error"
-  error: null,
-  addToolApprovalResponse: (response) => { /* approve/reject agent actions */ },
-  availableActions: actions,  // Tell the agent what it can do in your app
-};
+function App() {
+  const [open, setOpen] = useState(false);
+  const assistant = useAssistant({
+    tokenEndpoint: "/api/mwai/token",
+    agenticActions: actions,
+  });
 
-<CommandMenu open={open} onOpenChange={setOpen} chat={chat}>
-  <CommandMenuInput placeholder="Search or ask AI..." showSendButton />
-  <CommandMenuList>
-    <CommandMenuEmpty />
-    {/* Your command groups */}
-  </CommandMenuList>
-</CommandMenu>
-```
-
-The `availableActions` serve double duty — they appear as searchable commands in command mode, and the modifywithai agent knows it can invoke them in chat mode (with user approval).
-
-The `ExternalChat` interface:
-
-```tsx
-interface ExternalChat {
-  messages: UIMessage[];
-  sendMessage: (message: { text: string }) => void;
-  status: "ready" | "submitted" | "streaming" | "error";
-  error: Error | null;
-  addToolApprovalResponse?: (response: {
-    id: string;
-    approved: boolean;
-  }) => void;
-  availableActions?: CommandAction[];
+  return (
+    <CommandMenu
+      open={open}
+      onOpenChange={setOpen}
+      chat={assistant}
+    />
+  );
 }
 ```
+
+The `agenticActions` serve double duty — they appear as searchable commands in command mode, and the modifywithai agent can invoke them in chat mode (with user approval).

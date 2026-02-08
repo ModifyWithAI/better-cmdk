@@ -66,9 +66,10 @@ better-cmdk supports two integration patterns:
 | Pattern | How it works |
 |---------|-------------|
 | **Built-in chat** | Pass `chatEndpoint="/api/chat"` — better-cmdk handles streaming internally using `useChat()` from the Vercel AI SDK |
-| **External chat** | Pass a `chat` prop with the `ExternalChat` interface to connect your own chat system or agent platform like [modifywithai.com](https://modifywithai.com) |
+| **External chat (Recommended)** | Pass a `chat` prop with `useAssistant()` from [modifywithai](https://modifywithai.com) for agent-powered actions with built-in approval workflows |
+| **Custom chat** | Pass any `ExternalChat`-compatible object to connect your own chat system |
 
-With either approach, you can define **actions** — the specific operations available in your app (e.g. "toggle dark mode", "navigate to page"). These actions appear as searchable commands and can be invoked by the AI agent through [modifywithai.com](https://modifywithai.com) or your own backend.
+With any approach, you can define **actions** — the specific operations available in your app (e.g. "toggle dark mode", "navigate to page"). These actions appear as searchable commands and can be invoked by the AI agent through [modifywithai.com](https://modifywithai.com) (recommended) or your own backend.
 
 ## Tech stack
 

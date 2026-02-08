@@ -1,48 +1,103 @@
 ---
 title: "Extending"
-description: "Define actions, customize theming, and build advanced integrations"
+description: "Define commands, customize theming, and build advanced integrations"
 ---
 
-## Defining actions
+## Defining commands
 
-Actions are commands that appear in the palette and can also be triggered by the AI agent. Define them with the `CommandAction` interface and pass them to `CommandMenuList`:
+Most apps need commands in the palette — navigate to a page, toggle a setting, open a modal. Define them as `CommandDefinition[]` and pass them to `CommandMenu`:
 
 ```tsx
-import { CommandMenu, CommandMenuInput, CommandMenuList, CommandMenuEmpty } from "better-cmdk";
-import type { CommandAction } from "better-cmdk";
+import { CommandMenu, type CommandDefinition } from "better-cmdk";
+import { LayoutDashboardIcon, SettingsIcon, SunMoonIcon } from "lucide-react";
 
-const actions: CommandAction[] = [
+const commands: CommandDefinition[] = [
   {
-    name: "updateTheme",
-    label: "Change app theme",
-    options: {
-      theme: { type: "string", description: "light or dark", required: true },
-    },
-    execute: (opts) => {
-      document.documentElement.classList.toggle("dark", opts.theme === "dark");
-    },
+    name: "dashboard",
+    label: "Go to Dashboard",
+    group: "Navigation",
+    icon: <LayoutDashboardIcon className="size-4" />,
+    shortcut: "⌘D",
+    onSelect: () => router.push("/dashboard"),
   },
   {
-    name: "navigateTo",
-    label: "Go to page",
-    options: {
-      path: { type: "string", required: true },
-    },
-    execute: (opts) => {
-      window.location.href = opts.path as string;
-    },
+    name: "settings",
+    label: "Settings",
+    group: "Navigation",
+    icon: <SettingsIcon className="size-4" />,
+    shortcut: "⌘,",
+    onSelect: () => router.push("/settings"),
+  },
+  {
+    name: "dark-mode",
+    label: "Toggle dark mode",
+    group: "Appearance",
+    icon: <SunMoonIcon className="size-4" />,
+    onSelect: () => document.documentElement.classList.toggle("dark"),
   },
 ];
 
-<CommandMenu open={open} onOpenChange={setOpen} chatEndpoint="/api/chat">
-  <CommandMenuInput placeholder="Search or ask AI..." showSendButton />
-  <CommandMenuList actions={actions} actionsHeading="Actions">
-    <CommandMenuEmpty />
-  </CommandMenuList>
-</CommandMenu>
+<CommandMenu open={open} onOpenChange={setOpen} commands={commands} chatEndpoint="/api/chat" />
 ```
 
-The `CommandAction` interface:
+Commands with the same `group` string appear together under that heading. Ungrouped commands appear first.
+
+### Good command definitions
+
+Include a `label`, `group`, and `icon` for every command. The `label` is what users search for. The `group` organizes the palette. The `icon` makes commands scannable.
+
+<Tabs>
+  <Tab title="Good">
+    ```tsx
+    {
+      name: "settings",
+      label: "Settings",
+      group: "Navigation",
+      icon: <SettingsIcon className="size-4" />,
+      shortcut: "⌘,",
+      onSelect: () => router.push("/settings"),
+    }
+    ```
+  </Tab>
+  <Tab title="Bad">
+    ```tsx
+    {
+      name: "settings",
+      onSelect: () => router.push("/settings"),
+      // No label — displays raw name "settings"
+      // No group — floats outside any heading
+      // No icon — harder to scan visually
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### The CommandDefinition interface
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `string` | Unique key (used as cmdk value for search matching) |
+| `label` | `string?` | Display text (falls back to `name`) |
+| `group` | `string?` | Group heading — commands with the same group appear together |
+| `icon` | `ReactNode?` | Icon rendered before the label |
+| `shortcut` | `string?` | Keyboard shortcut hint (right-aligned) |
+| `keywords` | `string[]?` | Extra search terms beyond the label |
+| `disabled` | `boolean?` | Grayed out, not selectable |
+| `onSelect` | `() => void` | Called when the command is selected |
+
+## Actions (for AI providers)
+
+When you connect an AI platform like [modifywithai.com](https://modifywithai.com), the platform can invoke **actions** on behalf of the user. Actions are the operations the AI agent can perform — with typed parameters and optional approval gates.
+
+You define actions through your provider's SDK (e.g. `ActionDefinition` from modifywithai), not through better-cmdk directly. The provider passes them to `CommandMenu` via the `ExternalChat.agenticActions` field, where they also appear as searchable items in the palette.
+
+<Tip>
+  For details on defining actions, see the [modifywithai actions guide](https://modifywithai.com/docs/concepts/actions). The modifywithai agent uses action descriptions to decide when to invoke them — specific descriptions produce better results.
+</Tip>
+
+### The CommandAction interface
+
+This is the provider-facing contract that better-cmdk expects. Providers like modifywithai map their types to this interface automatically.
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -51,13 +106,24 @@ The `CommandAction` interface:
 | `options` | `Record<string, CommandActionOption>?` | Parameters the action accepts |
 | `execute` | `(options: Record<string, unknown>) => void` | Callback when the action runs |
 
-Actions serve double duty:
-- **In command mode** — they appear as searchable items in the palette
-- **In chat mode** — pass them as `agenticActions` on the `ExternalChat` object. We recommend [modifywithai.com](https://modifywithai.com) as your agent platform — it handles action execution, approval workflows, and context awareness out of the box
+## Commands vs actions
 
-## Render function pattern
+| | Commands | Actions |
+|---|---|---|
+| **Who defines them** | You (the app developer) | Your AI provider (e.g. modifywithai) |
+| **Type** | `CommandDefinition` | `CommandAction` (provider interface) |
+| **Passed via** | `CommandMenu commands={...}` | `ExternalChat.agenticActions` (through provider) |
+| **UI** | Icons, shortcuts, groups, keywords, disabled state | Label only |
+| **On select** | Runs `onSelect()` immediately | Starts a chat, AI invokes with parameters |
+| **AI-aware** | No — palette UI only | Yes — the AI agent can invoke them |
 
-`CommandMenu` accepts a render function as `children` so you can adapt the UI based on the current mode:
+<Tip>
+  Use **commands** for everything users do directly (navigate, toggle, open). **Actions** come through your AI provider — see the [modifywithai docs](https://modifywithai.com/docs/concepts/actions) for how to define them.
+</Tip>
+
+## Render function pattern (shadcn/cmdk compatible)
+
+For full control over rendering, pass a render function as `children` instead of the `commands` prop. This is the shadcn/cmdk-compatible pattern.
 
 ```tsx
 <CommandMenu open={open} onOpenChange={setOpen} chatEndpoint="/api/chat">
@@ -93,7 +159,7 @@ The render function receives:
 
 ## Tool approval workflow
 
-When the AI agent wants to perform an action, better-cmdk can show a confirmation dialog before executing. This is built on the `Confirmation` component family.
+Some actions shouldn't run without confirmation. Deleting data or sending emails should require the user to approve first. better-cmdk handles this with the `Confirmation` component family.
 
 The flow:
 
@@ -102,7 +168,7 @@ The flow:
 3. The user clicks **Approve** or **Deny**
 4. `addToolApprovalResponse({ id, approved: true/false })` sends the decision back to the AI
 
-This happens automatically when you use `AssistantMessages` (which `CommandMenuList` uses internally in chat mode). If you're building a custom chat UI, you can compose the confirmation components yourself:
+This happens automatically when you use `AssistantMessages` (which `CommandMenuList` uses internally in chat mode). If you're building a custom chat UI, compose the confirmation components yourself:
 
 ```tsx
 import {
@@ -146,7 +212,7 @@ The `Confirmation` component renders conditionally based on state — amber duri
 
 ## Context and hooks
 
-For advanced use cases, you can access the command menu state directly via context:
+Access command menu state from anywhere in your component tree. Useful when you need to trigger the palette programmatically or read the current mode.
 
 ```tsx
 import { CommandMenuProvider, useCommandMenuContext } from "better-cmdk";
@@ -195,12 +261,12 @@ better-cmdk uses shadcn/ui design tokens via CSS variables. Override them to mat
 
 ```css
 :root {
-  --primary: 240 5.9% 10%;          /* Button and accent color */
-  --primary-foreground: 0 0% 98%;   /* Text on primary */
-  --popover: 0 0% 100%;             /* Palette background */
-  --muted: 240 4.8% 95.9%;          /* Subtle backgrounds */
-  --border: 240 5.9% 90%;           /* Border color */
-  --radius: 0.5rem;                 /* Corner radius */
+  --primary: oklch(0.205 0 0);           /* Button and accent color */
+  --primary-foreground: oklch(0.985 0 0); /* Text on primary */
+  --popover: oklch(1 0 0);               /* Palette background */
+  --muted: oklch(0.97 0 0);              /* Subtle backgrounds */
+  --border: oklch(0.922 0 0);            /* Border color */
+  --radius: 0.625rem;                    /* Corner radius */
 }
 ```
 
@@ -226,92 +292,101 @@ import { cn } from "better-cmdk";
 
 ## Component reference
 
-All components exported from `better-cmdk`:
+<Accordion title="Command palette">
+  | Component | Description |
+  |-----------|-------------|
+  | `Command` | Root command primitive |
+  | `CommandDialog` | Modal command palette |
+  | `CommandInput` | Search input with icon |
+  | `CommandList` | Scrollable results container |
+  | `CommandEmpty` | "No results" state |
+  | `CommandGroup` | Groups commands with a heading |
+  | `CommandItem` | Selectable command row |
+  | `CommandShortcut` | Keyboard shortcut hint |
+  | `CommandSeparator` | Visual divider |
+</Accordion>
 
-### Command palette
+<Accordion title="Command menu (AI-enabled)">
+  | Component | Description |
+  |-----------|-------------|
+  | `CommandMenu` | Dual-mode command + chat palette |
+  | `CommandMenuInput` | Input with mode-aware icon and send button |
+  | `CommandMenuList` | List that switches between commands and chat |
+  | `CommandMenuEmpty` | "Ask AI" fallback when no commands match |
+  | `CommandMenuContent` | Dialog content wrapper |
+</Accordion>
 
-| Component | Description |
-|-----------|-------------|
-| `Command` | Root command primitive |
-| `CommandDialog` | Modal command palette |
-| `CommandInput` | Search input with icon |
-| `CommandList` | Scrollable results container |
-| `CommandEmpty` | "No results" state |
-| `CommandGroup` | Groups commands with a heading |
-| `CommandItem` | Selectable command row |
-| `CommandShortcut` | Keyboard shortcut hint |
-| `CommandSeparator` | Visual divider |
+<Accordion title="Chat">
+  | Component | Description |
+  |-----------|-------------|
+  | `ChatMessageList` | Auto-scrolling message container |
+  | `ChatLoading` | Streaming indicator |
+  | `ChatEmpty` | Empty chat state |
+</Accordion>
 
-### Command menu (AI-enabled)
+<Accordion title="Messages">
+  | Component | Description |
+  |-----------|-------------|
+  | `Message` | Message wrapper (user or assistant) |
+  | `MessageContent` | Message body |
+  | `MessageResponse` | Markdown-rendered response (uses Streamdown) |
+  | `AssistantMessages` | Full message thread with tool/form handling |
+</Accordion>
 
-| Component | Description |
-|-----------|-------------|
-| `CommandMenu` | Dual-mode command + chat palette |
-| `CommandMenuInput` | Input with mode-aware icon and send button |
-| `CommandMenuList` | List that switches between commands and chat |
-| `CommandMenuEmpty` | "Ask AI" fallback when no commands match |
-| `CommandMenuContent` | Dialog content wrapper |
+<Accordion title="Confirmation">
+  | Component | Description |
+  |-----------|-------------|
+  | `Confirmation` | Root wrapper — renders based on approval state |
+  | `ConfirmationTitle` | Heading text |
+  | `ConfirmationRequest` | Shown during approval request |
+  | `ConfirmationAccepted` | Shown when approved |
+  | `ConfirmationRejected` | Shown when rejected |
+  | `ConfirmationActions` | Button container |
+  | `ConfirmationAction` | Approve/deny button |
+</Accordion>
 
-### Chat
+<Accordion title="Task">
+  | Component | Description |
+  |-----------|-------------|
+  | `Task` | Collapsible task wrapper |
+  | `TaskTrigger` | Header with title and icon |
+  | `TaskContent` | Expandable content area |
+  | `TaskItem` | Individual task line |
+  | `TaskItemFile` | File badge |
+</Accordion>
 
-| Component | Description |
-|-----------|-------------|
-| `ChatMessageList` | Auto-scrolling message container |
-| `ChatLoading` | Streaming indicator |
-| `ChatEmpty` | Empty chat state |
+<Accordion title="Forms">
+  | Component | Description |
+  |-----------|-------------|
+  | `AssistantFormRenderer` | Renders AI-generated forms from JSON UI trees |
+  | `defaultFormRegistry` | Default component registry for form fields |
+</Accordion>
 
-### Messages
+<Accordion title="Utilities">
+  | Export | Description |
+  |--------|-------------|
+  | `Button` | Styled button with variant and size props |
+  | `buttonVariants` | CVA variant definitions |
+  | `cn` | Class name merger (`clsx` + `tailwind-merge`) |
+  | `Dialog` / `DialogContent` / etc. | Radix UI dialog primitives |
+  | `Collapsible` / `CollapsibleTrigger` / `CollapsibleContent` | Radix UI collapsible |
+</Accordion>
 
-| Component | Description |
-|-----------|-------------|
-| `Message` | Message wrapper (user or assistant) |
-| `MessageContent` | Message body |
-| `MessageResponse` | Markdown-rendered response (uses Streamdown) |
-| `AssistantMessages` | Full message thread with tool/form handling |
+<Accordion title="Context and hooks">
+  | Export | Description |
+  |--------|-------------|
+  | `CommandMenuProvider` | Context provider for command menu state |
+  | `CommandMenuContext` | Raw React context |
+  | `useCommandMenuContext` | Hook to access command menu state |
+</Accordion>
 
-### Confirmation
+## Next steps
 
-| Component | Description |
-|-----------|-------------|
-| `Confirmation` | Root wrapper — renders based on approval state |
-| `ConfirmationTitle` | Heading text |
-| `ConfirmationRequest` | Shown during approval request |
-| `ConfirmationAccepted` | Shown when approved |
-| `ConfirmationRejected` | Shown when rejected |
-| `ConfirmationActions` | Button container |
-| `ConfirmationAction` | Approve/deny button |
-
-### Task
-
-| Component | Description |
-|-----------|-------------|
-| `Task` | Collapsible task wrapper |
-| `TaskTrigger` | Header with title and icon |
-| `TaskContent` | Expandable content area |
-| `TaskItem` | Individual task line |
-| `TaskItemFile` | File badge |
-
-### Forms
-
-| Component | Description |
-|-----------|-------------|
-| `AssistantFormRenderer` | Renders AI-generated forms from JSON UI trees |
-| `defaultFormRegistry` | Default component registry for form fields |
-
-### Utilities
-
-| Export | Description |
-|--------|-------------|
-| `Button` | Styled button with variant and size props |
-| `buttonVariants` | CVA variant definitions |
-| `cn` | Class name merger (`clsx` + `tailwind-merge`) |
-| `Dialog` / `DialogContent` / etc. | Radix UI dialog primitives |
-| `Collapsible` / `CollapsibleTrigger` / `CollapsibleContent` | Radix UI collapsible |
-
-### Context and hooks
-
-| Export | Description |
-|--------|-------------|
-| `CommandMenuProvider` | Context provider for command menu state |
-| `CommandMenuContext` | Raw React context |
-| `useCommandMenuContext` | Hook to access command menu state |
+<CardGroup cols={2}>
+  <Card title="modifywithai Integration" icon="plug" href="https://modifywithai.com/docs">
+    Set up the agent platform that powers your AI actions.
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/nichochar/better-cmdk">
+    View the source, file issues, and contribute.
+  </Card>
+</CardGroup>

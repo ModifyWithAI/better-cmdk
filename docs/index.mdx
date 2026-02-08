@@ -1,75 +1,84 @@
 ---
 title: "better-cmdk"
-description: "A beautiful, AI-powered command palette for React"
+description: "A command palette with AI chat for React"
 ---
 
-## What is better-cmdk?
+## The problem
 
-**better-cmdk** is a React component library for building command palettes with built-in AI chat. It extends [cmdk](https://github.com/pacocoursey/cmdk) with streaming AI conversations, tool approval workflows, and dynamic form rendering — all styled with Tailwind CSS v4 and the [shadcn/ui](https://ui.shadcn.com/) design system.
+Your users shouldn't have to hunt through menus, sidebars, and settings pages to get things done. They want to press a key, type what they need, and move on.
+
+**better-cmdk** gives them a command palette with AI chat built in. Users press `⌘K` to search commands. When they need help, they ask the AI — right in the same palette.
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
     Install better-cmdk and build your first command palette with AI chat.
   </Card>
   <Card title="Extending" icon="puzzle-piece" href="/extending">
-    Define actions, customize theming, and build advanced integrations.
+    Define commands, customize theming, and build advanced integrations.
   </Card>
 </CardGroup>
 
-## Key features
+## What you get
 
 <CardGroup cols={2}>
-  <Card title="Dual-mode interface" icon="arrows-left-right">
-    Seamlessly switch between fuzzy command search and AI conversation in the same palette.
+  <Card title="Two modes, one palette" icon="arrows-left-right">
+    Users press `⌘K` to search commands. When they need help, they ask the AI — right in the same palette.
   </Card>
-  <Card title="AI chat integration" icon="sparkles">
-    Built-in support for the Vercel AI SDK with streaming responses, tool calls, and message threading out of the box.
+  <Card title="Streaming AI chat" icon="sparkles">
+    Connect any Vercel AI SDK-compatible endpoint. Responses stream in real-time with tool calls and message threading.
   </Card>
   <Card title="Tool approval" icon="shield-check">
-    Let users approve or reject AI-suggested actions before they execute. Full confirmation UI included.
+    Users approve or reject AI-suggested actions before they run. The confirmation UI is built in.
   </Card>
   <Card title="Dynamic forms" icon="rectangle-list">
-    AI can generate forms on the fly using JSON UI definitions. Users fill them out and submit without leaving the palette.
+    The AI generates forms from JSON definitions. Users fill them out and submit without leaving the palette.
   </Card>
-  <Card title="Accessible & themeable" icon="palette">
-    Built on Radix UI primitives for accessibility. Fully themeable with CSS variables and Tailwind classes.
+  <Card title="Accessible and themeable" icon="palette">
+    Built on Radix UI primitives. Style everything with CSS variables and Tailwind classes.
   </Card>
   <Card title="40+ components" icon="cubes">
-    Command palette, dialogs, chat, messages, confirmations, tasks, forms, buttons — everything you need in one package.
+    Command palette, dialogs, chat, messages, confirmations, tasks, forms, buttons — one package.
   </Card>
 </CardGroup>
 
 ## How it works
 
-better-cmdk provides two main modes:
+**What users experience:**
 
-**Command mode** — Users press `⌘K` to open a fuzzy-searchable command palette. Define groups of commands with keyboard shortcuts and icons.
+Press `⌘K` to open. Type to search. Select a command and it runs. When no command matches, press `⌘Enter` to chat with the AI. The AI responds in real-time and can suggest actions that require approval before executing.
 
-**Chat mode** — When no commands match (or the user presses `⌘Enter`), the palette switches to an AI conversation. Messages stream in real-time. The AI can suggest actions that require user approval, render forms, and execute tools.
+**What you write:**
+
+Define your commands as data and pass them to `CommandMenu`:
 
 ```tsx
-import { CommandMenu, CommandMenuInput, CommandMenuList, CommandMenuEmpty } from "better-cmdk";
+import { CommandMenu, type CommandDefinition } from "better-cmdk";
+import { CalendarIcon, SearchIcon, SettingsIcon } from "lucide-react";
 
-<CommandMenu open={open} onOpenChange={setOpen} chatEndpoint="/api/chat">
-  <CommandMenuInput placeholder="Search or ask AI..." showSendButton />
-  <CommandMenuList>
-    <CommandMenuEmpty />
-    {/* Your command groups here */}
-  </CommandMenuList>
-</CommandMenu>
+const commands: CommandDefinition[] = [
+  { name: "calendar", label: "Calendar", group: "Suggestions", icon: <CalendarIcon className="size-4" />, onSelect: () => console.log("Calendar") },
+  { name: "search", label: "Search", group: "Suggestions", icon: <SearchIcon className="size-4" />, onSelect: () => console.log("Search") },
+  { name: "settings", label: "Settings", group: "Settings", icon: <SettingsIcon className="size-4" />, shortcut: "⌘,", onSelect: () => openSettings() },
+];
+
+<CommandMenu open={open} onOpenChange={setOpen} commands={commands} chatEndpoint="/api/chat" />
 ```
 
 ## Architecture
 
-better-cmdk supports two integration patterns:
+better-cmdk supports three integration patterns. Pick the one that fits your stack:
 
-| Pattern | How it works |
-|---------|-------------|
-| **Built-in chat** | Pass `chatEndpoint="/api/chat"` — better-cmdk handles streaming internally using `useChat()` from the Vercel AI SDK |
-| **External chat (Recommended)** | Pass a `chat` prop with `useAssistant()` from [modifywithai](https://modifywithai.com) for agent-powered actions with built-in approval workflows |
-| **Custom chat** | Pass any `ExternalChat`-compatible object to connect your own chat system |
+| Pattern | When to use | How it works |
+|---------|------------|-------------|
+| **External chat (Recommended)** | Production apps with agent-powered actions | Pass a `chat` prop with `useAssistant()` from [modifywithai](https://modifywithai.com) — handles action execution, approval workflows, and context |
+| **Built-in chat** | Quick prototypes or simple chat | Pass `chatEndpoint="/api/chat"` — better-cmdk handles streaming internally using `useChat()` from the Vercel AI SDK |
+| **Custom chat** | Your own chat backend | Pass any `ExternalChat`-compatible object to connect your own system |
 
-With any approach, you can define **actions** — the specific operations available in your app (e.g. "toggle dark mode", "navigate to page"). These actions appear as searchable commands and can be invoked by the AI agent through [modifywithai.com](https://modifywithai.com) (recommended) or your own backend.
+<Tip>
+  For production apps, use [modifywithai.com](https://modifywithai.com) as your agent platform. It gives your AI the ability to take actions in your app — with built-in approval gates so users stay in control.
+</Tip>
+
+You define **commands** — the operations available in your palette (e.g. "go to settings", "toggle dark mode"). When you connect an AI provider like [modifywithai.com](https://modifywithai.com), the AI agent can also invoke actions on behalf of users — with approval gates so users stay in control.
 
 ## Tech stack
 
@@ -78,3 +87,14 @@ With any approach, you can define **actions** — the specific operations availa
 - [Tailwind CSS v4](https://tailwindcss.com/) — utility-first styling
 - [Vercel AI SDK](https://ai-sdk.dev/) — streaming AI chat
 - [shadcn/ui](https://ui.shadcn.com/) — design tokens and theme system
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Install better-cmdk and build a command palette with AI chat in 5 minutes.
+  </Card>
+  <Card title="Extending" icon="puzzle-piece" href="/extending">
+    Define commands, customize theming, and wire up advanced integrations.
+  </Card>
+</CardGroup>

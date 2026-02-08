@@ -192,6 +192,10 @@ Enable the built-in AI chat by providing either a `chatEndpoint` or an external 
 
 Users can switch to chat mode via `⌘ Enter` or by selecting the "Ask AI" item.
 
+### AI Actions
+
+When you connect an external chat provider like [modifywithai](https://modifywithai.com), the AI agent can invoke actions on behalf of the user — with approval gates so users stay in control. You define actions through your provider's SDK and pass them via the `chat` prop. See the [modifywithai docs](https://modifywithai.com/docs/concepts/actions) for setup.
+
 ## Advanced: Custom Children
 
 For full control over the command list rendering, you can pass children instead of `commands`. This approach is compatible with shadcn/ui patterns if you're migrating from an existing setup.

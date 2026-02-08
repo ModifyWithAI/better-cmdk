@@ -3,6 +3,8 @@ title: "Quickstart"
 description: "Install better-cmdk and build a command palette with AI chat"
 ---
 
+Install better-cmdk to add a command palette with AI chat to your React app.
+
 ## 1. Install
 
 <CodeGroup>
@@ -25,7 +27,7 @@ better-cmdk requires React 18+ and Tailwind CSS v4:
 npm install react react-dom tailwindcss
 ```
 
-For AI chat, you'll also need the Vercel AI SDK:
+For AI chat, you also need the Vercel AI SDK:
 
 ```bash
 npm install ai @ai-sdk/react @ai-sdk/openai
@@ -33,114 +35,191 @@ npm install ai @ai-sdk/react @ai-sdk/openai
 
 ## 2. Configure Tailwind CSS v4
 
-Add better-cmdk to your Tailwind sources in your main CSS file:
+Tell Tailwind to scan better-cmdk's components so its classes are included in your build:
 
 ```css
 @import "tailwindcss";
 @source "node_modules/better-cmdk";
 ```
 
-Then add the required CSS variables for the shadcn/ui design tokens:
+Then add the CSS variables for the shadcn/ui design tokens.
 
-```css
-:root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-  --radius: 0.5rem;
-}
+<Accordion title="CSS variables">
+  These match the shadcn/ui design tokens. Override them to match your brand.
 
-@theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-}
-```
+  ```css
+  :root {
+    --radius: 0.625rem;
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+  }
+
+  @theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+  }
+  ```
+</Accordion>
 
 ## 3. Basic command palette
 
-Start with a simple command palette — no AI, just fuzzy search:
+Start with a basic command palette — no AI yet. Users press `⌘K`, search, and select.
 
-```tsx
-"use client";
+<Tabs>
+  <Tab title="Recommended">
+    Define your commands as data and pass them to `CommandMenu`. The component handles rendering, grouping, and search.
 
-import { useState, useEffect } from "react";
-import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandSeparator,
-  CommandShortcut,
-} from "better-cmdk";
+    ```tsx
+    "use client";
 
-export function CommandPalette() {
-  const [open, setOpen] = useState(false);
+    import { useState, useEffect } from "react";
+    import { CalendarIcon, SearchIcon, UserIcon, SettingsIcon } from "lucide-react";
+    import { CommandMenu, type CommandDefinition } from "better-cmdk";
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
+    const commands: CommandDefinition[] = [
+      {
+        name: "calendar",
+        label: "Calendar",
+        icon: <CalendarIcon className="size-4" />,
+        group: "Suggestions",
+        onSelect: () => console.log("Calendar selected"),
+      },
+      {
+        name: "search",
+        label: "Search",
+        icon: <SearchIcon className="size-4" />,
+        group: "Suggestions",
+        onSelect: () => console.log("Search selected"),
+      },
+      {
+        name: "profile",
+        label: "Profile",
+        icon: <UserIcon className="size-4" />,
+        group: "Settings",
+        shortcut: "⌘P",
+        onSelect: () => console.log("Profile selected"),
+      },
+      {
+        name: "settings",
+        label: "Settings",
+        icon: <SettingsIcon className="size-4" />,
+        group: "Settings",
+        shortcut: "⌘S",
+        onSelect: () => console.log("Settings selected"),
+      },
+    ];
 
-  return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search..." />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Suggestions">
-          <CommandItem>Calendar</CommandItem>
-          <CommandItem>Search</CommandItem>
-        </CommandGroup>
-        <CommandSeparator />
-        <CommandGroup heading="Settings">
-          <CommandItem>
-            Profile
-            <CommandShortcut>⌘P</CommandShortcut>
-          </CommandItem>
-          <CommandItem>
-            Settings
-            <CommandShortcut>⌘S</CommandShortcut>
-          </CommandItem>
-        </CommandGroup>
-      </CommandList>
-    </CommandDialog>
-  );
-}
-```
+    export function CommandPalette() {
+      const [open, setOpen] = useState(false);
+
+      useEffect(() => {
+        const down = (e: KeyboardEvent) => {
+          if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            setOpen((open) => !open);
+          }
+        };
+        document.addEventListener("keydown", down);
+        return () => document.removeEventListener("keydown", down);
+      }, []);
+
+      return (
+        <CommandMenu
+          open={open}
+          onOpenChange={setOpen}
+          commands={commands}
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="shadcn/cmdk compatible">
+    If you're migrating from shadcn/cmdk, you can use JSX children instead. This gives you full control over rendering.
+
+    ```tsx
+    "use client";
+
+    import { useState, useEffect } from "react";
+    import {
+      CommandDialog,
+      CommandInput,
+      CommandList,
+      CommandEmpty,
+      CommandGroup,
+      CommandItem,
+      CommandSeparator,
+      CommandShortcut,
+    } from "better-cmdk";
+
+    export function CommandPalette() {
+      const [open, setOpen] = useState(false);
+
+      useEffect(() => {
+        const down = (e: KeyboardEvent) => {
+          if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            setOpen((open) => !open);
+          }
+        };
+        document.addEventListener("keydown", down);
+        return () => document.removeEventListener("keydown", down);
+      }, []);
+
+      return (
+        <CommandDialog open={open} onOpenChange={setOpen}>
+          <CommandInput placeholder="Type a command or search..." />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Suggestions">
+              <CommandItem>Calendar</CommandItem>
+              <CommandItem>Search</CommandItem>
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="Settings">
+              <CommandItem>
+                Profile
+                <CommandShortcut>⌘P</CommandShortcut>
+              </CommandItem>
+              <CommandItem>
+                Settings
+                <CommandShortcut>⌘S</CommandShortcut>
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </CommandDialog>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
 
 This gives you a `⌘K`-triggered modal with fuzzy search filtering, keyboard navigation, and grouped commands.
 
 ## 4. Add AI chat
 
-Upgrade to `CommandMenu` to get the dual-mode command + chat interface. This requires a streaming API endpoint.
+Now add AI chat. When no command matches, users can ask the AI directly.
 
 ### Set up the API route
 
@@ -167,62 +246,110 @@ export async function POST(req: Request) {
 
 ### Use CommandMenu
 
-Replace `CommandDialog` with `CommandMenu` and point it at your API endpoint:
+Point `CommandMenu` at your API endpoint:
 
-```tsx
-"use client";
+<Tabs>
+  <Tab title="Recommended">
+    Add `chatEndpoint` to your existing `commands`-based palette:
 
-import { useState, useEffect } from "react";
-import {
-  CommandMenu,
-  CommandMenuInput,
-  CommandMenuList,
-  CommandMenuEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandShortcut,
-} from "better-cmdk";
+    ```tsx
+    "use client";
 
-export function CommandPalette() {
-  const [open, setOpen] = useState(false);
+    import { useState, useEffect } from "react";
+    import { CalendarIcon, SearchIcon, UserIcon, SettingsIcon } from "lucide-react";
+    import { CommandMenu, type CommandDefinition } from "better-cmdk";
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
+    const commands: CommandDefinition[] = [
+      { name: "calendar", label: "Calendar", icon: <CalendarIcon className="size-4" />, group: "Suggestions", onSelect: () => console.log("Calendar") },
+      { name: "search", label: "Search", icon: <SearchIcon className="size-4" />, group: "Suggestions", onSelect: () => console.log("Search") },
+      { name: "profile", label: "Profile", icon: <UserIcon className="size-4" />, group: "Settings", shortcut: "⌘P", onSelect: () => console.log("Profile") },
+      { name: "settings", label: "Settings", icon: <SettingsIcon className="size-4" />, group: "Settings", shortcut: "⌘S", onSelect: () => console.log("Settings") },
+    ];
 
-  return (
-    <CommandMenu
-      open={open}
-      onOpenChange={setOpen}
-      chatEndpoint="/api/chat"
-    >
-      <CommandMenuInput placeholder="Search or ask AI..." showSendButton />
-      <CommandMenuList>
-        <CommandMenuEmpty />
-        <CommandGroup heading="Actions">
-          <CommandItem onSelect={() => console.log("Profile")}>
-            Profile
-            <CommandShortcut>⌘P</CommandShortcut>
-          </CommandItem>
-          <CommandItem onSelect={() => console.log("Settings")}>
-            Settings
-            <CommandShortcut>⌘S</CommandShortcut>
-          </CommandItem>
-        </CommandGroup>
-      </CommandMenuList>
-    </CommandMenu>
-  );
-}
-```
+    export function CommandPalette() {
+      const [open, setOpen] = useState(false);
 
-Now your command palette has two modes:
+      useEffect(() => {
+        const down = (e: KeyboardEvent) => {
+          if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            setOpen((open) => !open);
+          }
+        };
+        document.addEventListener("keydown", down);
+        return () => document.removeEventListener("keydown", down);
+      }, []);
+
+      return (
+        <CommandMenu
+          open={open}
+          onOpenChange={setOpen}
+          commands={commands}
+          chatEndpoint="/api/chat"
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="shadcn/cmdk compatible">
+    Replace `CommandDialog` with `CommandMenu` and use the children pattern:
+
+    ```tsx
+    "use client";
+
+    import { useState, useEffect } from "react";
+    import {
+      CommandMenu,
+      CommandMenuInput,
+      CommandMenuList,
+      CommandMenuEmpty,
+      CommandGroup,
+      CommandItem,
+      CommandShortcut,
+    } from "better-cmdk";
+
+    export function CommandPalette() {
+      const [open, setOpen] = useState(false);
+
+      useEffect(() => {
+        const down = (e: KeyboardEvent) => {
+          if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            setOpen((open) => !open);
+          }
+        };
+        document.addEventListener("keydown", down);
+        return () => document.removeEventListener("keydown", down);
+      }, []);
+
+      return (
+        <CommandMenu
+          open={open}
+          onOpenChange={setOpen}
+          chatEndpoint="/api/chat"
+        >
+          <CommandMenuInput placeholder="Search or ask AI..." showSendButton />
+          <CommandMenuList>
+            <CommandMenuEmpty />
+            <CommandGroup heading="Actions">
+              <CommandItem onSelect={() => console.log("Profile")}>
+                Profile
+                <CommandShortcut>⌘P</CommandShortcut>
+              </CommandItem>
+              <CommandItem onSelect={() => console.log("Settings")}>
+                Settings
+                <CommandShortcut>⌘S</CommandShortcut>
+              </CommandItem>
+            </CommandGroup>
+          </CommandMenuList>
+        </CommandMenu>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Your command palette now has two modes:
 
 - **Command mode** — type to fuzzy-search commands. If nothing matches, an "Ask AI" option appears.
 - **Chat mode** — select "Ask AI" or press `⌘Enter` to switch. Type a question and get a streaming AI response.
@@ -253,24 +380,31 @@ export const POST = createAssistantTokenHandler({
 
 ### Connect to CommandMenu
 
-The `useAssistant()` hook from modifywithai returns an object that is directly compatible with CommandMenu's `chat` prop:
+The `useAssistant()` hook from modifywithai returns an object directly compatible with CommandMenu's `chat` prop. Define your **commands** (what shows in the palette) and **actions** (what the AI agent can do) separately:
 
 ```tsx
-import { useState } from "react";
-import { useAssistant } from "modifywithai";
-import { CommandMenu } from "better-cmdk";
-import type { CommandAction } from "better-cmdk";
+import { useState, useEffect } from "react";
+import { useAssistant, type ActionDefinition } from "modifywithai";
+import { CommandMenu, type CommandDefinition } from "better-cmdk";
+import { CalendarIcon, SettingsIcon } from "lucide-react";
 
-const actions: CommandAction[] = [
+// Commands — what shows in the palette
+const commands: CommandDefinition[] = [
+  { name: "calendar", label: "Calendar", icon: <CalendarIcon className="size-4" />, group: "Navigation", onSelect: () => router.push("/calendar") },
+  { name: "settings", label: "Settings", icon: <SettingsIcon className="size-4" />, group: "Navigation", shortcut: "⌘,", onSelect: () => router.push("/settings") },
+];
+
+// Actions — what the AI agent can do on behalf of the user
+const actions: ActionDefinition[] = [
   {
     name: "toggleDarkMode",
-    label: "Toggle dark mode",
+    description: "Toggle between light and dark mode",
     execute: () => document.documentElement.classList.toggle("dark"),
   },
   {
     name: "navigateTo",
-    label: "Go to page",
-    options: { path: { type: "string", required: true } },
+    description: "Navigate to a page in the app",
+    options: { path: { type: "string", description: "Page path", required: true } },
     execute: (opts) => { window.location.href = opts.path as string },
   },
 ];
@@ -282,14 +416,37 @@ function App() {
     agenticActions: actions,
   });
 
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
+
   return (
     <CommandMenu
       open={open}
       onOpenChange={setOpen}
+      commands={commands}
       chat={assistant}
     />
   );
 }
 ```
 
-The `agenticActions` serve double duty — they appear as searchable commands in command mode, and the modifywithai agent can invoke them in chat mode (with user approval).
+**Commands** populate the palette with searchable items users can select directly. **Actions** tell the modifywithai agent what it can do — the agent invokes them in chat mode with user approval.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Extending" icon="puzzle-piece" href="/extending">
+    Define commands, customize theming, and build advanced integrations.
+  </Card>
+  <Card title="modifywithai Docs" icon="book" href="https://modifywithai.com/docs">
+    Learn how to set up the agent platform that powers your AI actions.
+  </Card>
+</CardGroup>

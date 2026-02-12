@@ -1,9 +1,9 @@
 "use client"
 
-import { Command as CommandPrimitive } from "cmdk"
+import { Command as CommandPrimitive } from "../../lib/cmdk"
 import { SearchIcon } from "lucide-react"
 import { Dialog as DialogPrimitive } from "radix-ui"
-import type * as React from "react"
+import * as React from "react"
 
 import { cn } from "../../lib/utils"
 import {
@@ -23,7 +23,7 @@ function Command({
         <CommandPrimitive
             data-slot="command"
             className={cn(
-                "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
+                "text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
                 className,
             )}
             {...props}
@@ -41,9 +41,10 @@ function CommandDialogContent({
             <DialogPrimitive.Content
                 data-slot="dialog-content"
                 className={cn(
-                    "bg-background fixed top-1/3 left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-xl border-none p-2 shadow-2xl ring-4 ring-neutral-200/80 duration-200 outline-none sm:max-w-lg dark:bg-neutral-900 dark:ring-neutral-800",
+                    "backdrop-blur-xl fixed top-1/3 left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-xl border-none p-2 shadow-2xl ring-0 duration-200 outline-none sm:max-w-lg",
                     className,
                 )}
+                style={{ backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)" }}
                 {...props}
             >
                 {children}
@@ -70,7 +71,7 @@ function CommandDialog({
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
-                <Command className="**:data-[slot=command-input-wrapper]:bg-input/50 **:data-[slot=command-input-wrapper]:border-input rounded-none bg-transparent **:data-[slot=command-input]:!h-9 **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0 **:data-[slot=command-input-wrapper]:!h-9 **:data-[slot=command-input-wrapper]:rounded-md **:data-[slot=command-input-wrapper]:border">
+                <Command className="**:data-[slot=command-input-wrapper]:bg-transparent **:data-[slot=command-input-wrapper]:border-input rounded-none bg-transparent **:data-[slot=command-input]:!h-9 **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0 **:data-[slot=command-input-wrapper]:!h-9 **:data-[slot=command-input-wrapper]:rounded-md **:data-[slot=command-input-wrapper]:border">
                     {children}
                 </Command>
             </CommandDialogContent>
@@ -108,9 +109,10 @@ function CommandList({
         <CommandPrimitive.List
             data-slot="command-list"
             className={cn(
-                "order-1 max-h-[300px] min-h-0 flex-1 overflow-x-hidden overflow-y-auto",
+                "order-1 max-h-[300px] min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain",
                 className,
             )}
+            style={{ overscrollBehavior: "contain" }}
             {...props}
         />
     )
@@ -134,13 +136,38 @@ function CommandEmpty({
 
 function CommandGroup({
     className,
+    ref,
     ...props
 }: React.ComponentProps<typeof CommandPrimitive.Group>) {
+    const groupRef = React.useCallback(
+        (node: HTMLDivElement | null) => {
+            if (node) {
+                const heading = node.querySelector("[cmdk-group-heading]")
+                if (heading instanceof HTMLElement) {
+                    heading.style.position = "sticky"
+                    heading.style.top = "0"
+                    heading.style.zIndex = "10"
+                    heading.style.width = "fit-content"
+                    heading.style.backdropFilter = "blur(24px)"
+                    heading.style.WebkitBackdropFilter = "blur(24px)"
+                    heading.style.backgroundColor = "color-mix(in oklch, var(--background) 95%, transparent)"
+                    heading.style.borderRadius = "6px"
+                    heading.style.setProperty("padding-top", "4px", "important")
+                    heading.style.setProperty("padding-bottom", "4px", "important")
+                }
+            }
+            if (typeof ref === "function") ref(node)
+            else if (ref) ref.current = node
+        },
+        [ref],
+    )
+
     return (
         <CommandPrimitive.Group
+            ref={groupRef}
             data-slot="command-group"
             className={cn(
-                "text-foreground !p-0 [&_[cmdk-group-heading]]:text-muted-foreground overflow-hidden [&_[cmdk-group-heading]]:scroll-mt-16 [&_[cmdk-group-heading]]:pt-0! [&_[cmdk-group-heading]]:!p-3  [&_[cmdk-group-heading]]:!pb-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium",
+                "text-foreground !p-0 [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:scroll-mt-16 [&_[cmdk-group-heading]]:pt-0! [&_[cmdk-group-heading]]:!p-3 [&_[cmdk-group-heading]]:!pb-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium",
                 className,
             )}
             {...props}

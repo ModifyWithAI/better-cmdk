@@ -5,13 +5,12 @@ import {
     Command as CommandPrimitive,
     defaultFilter,
     useCommandState,
-} from "cmdk"
+} from "../../lib/cmdk"
 import {
-    CornerDownLeftIcon,
+    ArrowUpIcon,
     MessageCircleIcon,
-    SearchIcon,
-    SparklesIcon,
 } from "lucide-react"
+import { motion } from "motion/react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 import * as React from "react"
 import {
@@ -104,39 +103,54 @@ function CommandContent({
     children,
     corners = "xl",
     borderColor,
+    expanded,
     ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
     corners?: CommandMenuCorners
     borderColor?: string
+    expanded?: boolean
 }) {
     return (
         <DialogPortal data-slot="dialog-portal">
-            <DialogPrimitive.Content
-                data-slot="dialog-content"
-                className={cn(
-                    "bg-background fixed top-1/3 left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden border-none p-2 shadow-2xl ring-4 ring-neutral-200/80 duration-200 outline-none sm:max-w-lg dark:bg-neutral-900 dark:ring-neutral-800",
-                    cornersMap[corners],
-                    className,
-                )}
-                style={
-                    {
-                        "--cmdk-radius": cornersValueMap[corners],
-                        ...(borderColor
-                            ? { "--tw-ring-color": borderColor }
-                            : {}),
-                    } as React.CSSProperties
-                }
-                {...props}
+            <div
+                className="fixed top-1/3 left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]"
+                style={{ maxWidth: "45vw" }}
             >
-                {children}
-            </DialogPrimitive.Content>
+                <DialogPrimitive.Content
+                    data-slot="dialog-content"
+                    className={cn(
+                        "backdrop-blur-xl flex flex-col w-full overflow-hidden border border-input p-0 ring-0 outline-none",
+                        cornersMap[corners],
+                        className,
+                    )}
+                    style={
+                        {
+                            "--cmdk-radius": cornersValueMap[corners],
+                            maxHeight: "45vh",
+                            backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)",
+                            boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)",
+                            ...(borderColor
+                                ? { "--tw-ring-color": borderColor }
+                                : {}),
+                        } as React.CSSProperties
+                    }
+                    {...props}
+                >
+                    {children}
+                </DialogPrimitive.Content>
+                <div className="flex justify-end select-none">
+                    <a href="https://better-cmdk.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground font-medium px-2 py-0.5 hover:text-foreground transition-colors" style={{ borderRadius: "0 0 0.375rem 0.375rem", marginRight: "1rem", backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderLeft: "1px solid var(--color-input)", borderRight: "1px solid var(--color-input)", borderBottom: "1px solid var(--color-input)", boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)" }}>
+                        powered by better-cmdk
+                    </a>
+                </div>
+            </div>
         </DialogPortal>
     )
 }
 
 const defaultChildren = (
     <>
-        <CommandInput placeholder="Search or ask AI..." showSendButton />
+        <CommandInput placeholder="Search for commands or ask AI..." showSendButton />
         <CommandList>
             <CommandEmpty />
         </CommandList>
@@ -151,7 +165,7 @@ function CommandMenuInner({
     corners = "xl",
     borderColor,
     commands,
-    commandsPlaceholder = "Search or ask AI...",
+    commandsPlaceholder = "Search for commands or ask AI...",
     commandsAskAILabel = "Ask AI",
     ...props
 }: Omit<CommandMenuProps, "chatEndpoint" | "chat" | "onModeChange">) {
@@ -163,7 +177,19 @@ function CommandMenuInner({
         isEnabled,
         sendMessage,
         addToolApprovalResponse,
+        setInputValue,
+        inputValue,
     } = useCommandMenuContext()
+
+    const expanded = mode === "chat" || inputValue.length > 0
+
+    const handleOpenChange = React.useCallback(
+        (open: boolean) => {
+            if (open) setInputValue("")
+            props.onOpenChange?.(open)
+        },
+        [props.onOpenChange, setInputValue],
+    )
 
     const renderChildren = () => {
         // Declarative commands prop takes precedence
@@ -199,12 +225,26 @@ function CommandMenuInner({
         }
     }
 
+    React.useEffect(() => {
+        const down = (e: globalThis.KeyboardEvent) => {
+            if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault()
+                handleOpenChange(false)
+            }
+        }
+        if (props.open) {
+            document.addEventListener("keydown", down)
+            return () => document.removeEventListener("keydown", down)
+        }
+    }, [props.open, handleOpenChange])
+
     return (
-        <Dialog {...props}>
+        <Dialog {...props} onOpenChange={handleOpenChange}>
             <CommandContent
                 className={className}
                 corners={corners}
                 borderColor={borderColor}
+                expanded={expanded}
                 onEscapeKeyDown={handleEscapeKeyDown}
             >
                 <DialogHeader className="sr-only">
@@ -214,8 +254,8 @@ function CommandMenuInner({
                 <CommandPrimitive
                     data-slot="command"
                     className={cn(
-                        "**:data-[slot=command-input-wrapper]:bg-input/50 **:data-[slot=command-input-wrapper]:border-input rounded-none bg-transparent **:data-[slot=command-input]:!h-9 **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0 **:data-[slot=command-input-wrapper]:!h-9 **:data-[slot=command-input-wrapper]:border",
-                        "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden",
+                        "**:data-[slot=command-input-wrapper]:bg-transparent rounded-none bg-transparent **:data-[slot=command-input]:!h-11 **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0 **:data-[slot=command-input-wrapper]:!h-11",
+                        "text-popover-foreground flex h-full min-h-0 w-full flex-col overflow-hidden",
                     )}
                     style={{ borderRadius: "var(--cmdk-radius, 0.75rem)" }}
                 >
@@ -313,17 +353,16 @@ function CommandInput({
         }
     }
 
+    const showList = mode === "chat" || inputValue.length > 0
+
     return (
         <div
             data-slot="command-input-wrapper"
-            className="order-2 flex h-9 items-center gap-2 border-t px-3 mt-2"
-            style={{ borderRadius: "var(--cmdk-radius, 0.75rem)" }}
-        >
-            {mode === "command" ? (
-                <SearchIcon className="size-4 shrink-0 opacity-50" />
-            ) : (
-                <SparklesIcon className="size-4 shrink-0 text-primary" />
+            className={cn(
+                "order-2 flex h-11 items-center gap-2 px-6 transition-[margin,border-color] duration-200",
+                showList ? "border-t border-input mt-0" : "border-t border-transparent mt-0",
             )}
+        >
             <CommandPrimitive.Input
                 data-slot="command-input"
                 value={inputValue}
@@ -341,10 +380,10 @@ function CommandInput({
                     type="button"
                     onClick={handleSend}
                     disabled={!inputValue.trim() || isLoading}
-                    className="flex items-center justify-center size-6 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center justify-center size-6 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     style={{ borderRadius: "var(--cmdk-radius, 0.75rem)" }}
                 >
-                    <CornerDownLeftIcon className="size-3" />
+                    <ArrowUpIcon className="size-3" />
                 </button>
             )}
         </div>
@@ -420,7 +459,7 @@ function CommandEmpty({
                 style={{ borderRadius: "var(--cmdk-radius, 0.75rem)" }}
                 {...props}
             >
-                <SparklesIcon className="size-4 shrink-0 text-primary" />
+                <MessageCircleIcon className="size-4 shrink-0 text-primary" />
                 <div className="flex flex-col items-start gap-0.5">
                     <span className="font-medium">{label}</span>
                 </div>
@@ -624,6 +663,7 @@ function CommandList({
         startNewChat,
         conversations,
         loadConversation,
+        inputValue,
     } = useCommandMenuContext()
 
     const stableSendMessage = React.useCallback(
@@ -637,14 +677,14 @@ function CommandList({
             <div
                 data-slot="command-list"
                 className={cn(
-                    "order-1 max-h-[300px] min-h-0 flex-1 overflow-hidden",
+                    "order-1 min-h-0 flex-1 overflow-hidden px-3 flex flex-col",
                     className,
                 )}
             >
                 {messages.length === 0 ? (
                     <ChatEmpty />
                 ) : (
-                    <ChatMessageList className="max-h-[300px]">
+                    <ChatMessageList style={{ flex: "1 1 0%", minHeight: 0 }}>
                         <div className="px-3 py-2 space-y-4">
                             <AssistantMessages
                                 messages={messages}
@@ -697,49 +737,59 @@ function CommandList({
         sendMessage(label)
     }
 
+    const showList = inputValue.length > 0
+
     return (
-        <CommandPrimitive.List
-            data-slot="command-list"
-            className={cn(
-                "order-1 max-h-[300px] min-h-0 flex-1 overflow-x-hidden overflow-y-auto",
-                className,
-            )}
-            {...props}
+        <motion.div
+            initial={false}
+            animate={{ height: showList ? "calc(45vh - 2.75rem)" : 0 }}
+            transition={{ type: "spring", duration: 0.25, bounce: 0 }}
+            className="order-1 min-h-0 overflow-hidden px-3"
         >
-            {otherChildren}
-            {conversations.length > 0 && (
-                <CommandGroup heading="Recent Chats">
-                    {conversations.slice(0, 5).map((convo) => (
-                        <CommandItem
-                            key={convo.id}
-                            value={`chat-history-${convo.id}`}
-                            keywords={[convo.title]}
-                            onSelect={() => loadConversation(convo.id)}
-                        >
-                            <MessageCircleIcon className="size-4" />
-                            <span className="truncate">{convo.title}</span>
-                            <span className="ml-auto text-xs text-muted-foreground">
-                                {formatRelativeTime(convo.updatedAt)}
-                            </span>
-                        </CommandItem>
-                    ))}
-                </CommandGroup>
-            )}
-            {executableActions && executableActions.length > 0 && (
-                <CommandGroup heading={actionsHeading}>
-                    {executableActions.map((action) => (
-                        <CommandItem
-                            key={action.name}
-                            value={action.label ?? action.name}
-                            onSelect={() => handleActionSelect(action)}
-                        >
-                            {action.label ?? action.name}
-                        </CommandItem>
-                    ))}
-                </CommandGroup>
-            )}
-            {askAIChildren}
-        </CommandPrimitive.List>
+            <CommandPrimitive.List
+                data-slot="command-list"
+                className={cn(
+                    "overflow-x-hidden overflow-y-auto overscroll-contain pt-2 h-full",
+                    className,
+                )}
+                style={{ overscrollBehavior: "contain" }}
+                {...props}
+            >
+                {otherChildren}
+                {conversations.length > 0 && (
+                    <CommandGroup heading="Recent Chats">
+                        {conversations.slice(0, 5).map((convo) => (
+                            <CommandItem
+                                key={convo.id}
+                                value={`chat-history-${convo.id}`}
+                                keywords={[convo.title]}
+                                onSelect={() => loadConversation(convo.id)}
+                            >
+                                <MessageCircleIcon className="size-4" />
+                                <span className="truncate">{convo.title}</span>
+                                <span className="ml-auto text-xs text-muted-foreground">
+                                    {formatRelativeTime(convo.updatedAt)}
+                                </span>
+                            </CommandItem>
+                        ))}
+                    </CommandGroup>
+                )}
+                {executableActions && executableActions.length > 0 && (
+                    <CommandGroup heading={actionsHeading}>
+                        {executableActions.map((action) => (
+                            <CommandItem
+                                key={action.name}
+                                value={action.label ?? action.name}
+                                onSelect={() => handleActionSelect(action)}
+                            >
+                                {action.label ?? action.name}
+                            </CommandItem>
+                        ))}
+                    </CommandGroup>
+                )}
+                {askAIChildren}
+            </CommandPrimitive.List>
+        </motion.div>
     )
 }
 

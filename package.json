@@ -16,10 +16,12 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "AGENTS.md"
   ],
   "scripts": {
-    "build": "bun run --bun tsdown"
+    "build:prompts": "bun run scripts/build-prompts.ts",
+    "build": "bun run --bun tsdown && bun run build:prompts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",
@@ -36,11 +38,15 @@
     "@json-render/core": "^0.2.0",
     "@json-render/react": "^0.2.0",
     "@radix-ui/react-collapsible": "^1.1.12",
+    "@radix-ui/react-compose-refs": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-id": "^1.1.0",
+    "@radix-ui/react-primitive": "^2.0.2",
     "ai": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cmdk": "^1.1.1",
     "lucide-react": "^0.563.0",
+    "motion": "^12.0.0",
     "radix-ui": "^1.4.3",
     "streamdown": "^2.1.0",
     "tailwind-merge": "^3.4.0",

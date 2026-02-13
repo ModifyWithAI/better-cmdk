@@ -21,7 +21,8 @@
   ],
   "scripts": {
     "build:prompts": "bun run scripts/build-prompts.ts",
-    "build": "bun run --bun tsdown && bun run build:prompts"
+    "build": "bun run --bun tsdown && bun run build:prompts",
+    "build:publish": "bun run --bun tsdown --publish && bun run build:prompts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",

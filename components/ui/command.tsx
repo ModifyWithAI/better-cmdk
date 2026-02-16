@@ -149,7 +149,10 @@ function CommandGroup({
                     heading.style.zIndex = "10"
                     heading.style.width = "fit-content"
                     heading.style.backdropFilter = "blur(24px)"
-                    heading.style.WebkitBackdropFilter = "blur(24px)"
+                    heading.style.setProperty(
+                        "-webkit-backdrop-filter",
+                        "blur(24px)",
+                    )
                     heading.style.backgroundColor = "color-mix(in oklch, var(--background) 95%, transparent)"
                     heading.style.borderRadius = "6px"
                     heading.style.setProperty("padding-top", "4px", "important")

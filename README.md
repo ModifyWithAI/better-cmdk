@@ -173,7 +173,7 @@ Each command in the `commands` array supports:
 
 `CommandMenu` now includes a mobile-first sheet mode:
 
-- Long-press (`~350ms`) in the lower-middle viewport shows a hint: `Swipe up for Command Menu`
+- Long-press (`~350ms`) in the lower-right viewport shows a hint: `Swipe up for Command Menu`
 - Swipe up opens the menu
 - Keyboard-last flow on mobile (sheet opens without forcing keyboard)
 - Keyboard-aware input/list insets via `visualViewport`

@@ -128,17 +128,19 @@ function useMobileUIContext() {
 
 function resolveMobileConfig(mobile?: CommandMenuMobileOptions): ResolvedMobileConfig {
     const gestureEnabled = mobile?.gesture !== false
+    const gestureOptions = mobile?.gesture === false ? undefined : mobile?.gesture
+
     return {
         enabled: mobile?.enabled ?? true,
         breakpoint: mobile?.breakpoint ?? DEFAULT_MOBILE_BREAKPOINT,
         layout: mobile?.layout ?? "keyboard-last",
         gesture: {
             enabled: gestureEnabled
-                ? (mobile?.gesture?.enabled ?? true)
+                ? (gestureOptions?.enabled ?? true)
                 : false,
-            holdMs: gestureEnabled ? (mobile?.gesture?.holdMs ?? 350) : 350,
+            holdMs: gestureEnabled ? (gestureOptions?.holdMs ?? 350) : 350,
             swipeUpPx: gestureEnabled
-                ? (mobile?.gesture?.swipeUpPx ?? 56)
+                ? (gestureOptions?.swipeUpPx ?? 56)
                 : 56,
         },
         showQuickActions: mobile?.showQuickActions ?? true,
@@ -282,7 +284,9 @@ function CommandContent({
     return (
         <DialogPortal data-slot="dialog-portal">
             {isMobile && (
-                <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px]" />
+                <DialogPrimitive.Overlay
+                    className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+                />
             )}
             <div
                 className={cn(
@@ -302,7 +306,7 @@ function CommandContent({
                     className={cn(
                         "backdrop-blur-xl flex flex-col w-full overflow-hidden border border-input p-0 ring-0 outline-none",
                         isMobile
-                            ? "rounded-none rounded-t-2xl border-x-0 border-b-0"
+                            ? "border-x-0 border-b-0 will-change-transform data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 data-[state=open]:duration-300 data-[state=closed]:duration-200"
                             : cornersMap[corners],
                         className,
                     )}
@@ -310,10 +314,22 @@ function CommandContent({
                         {
                             "--cmdk-radius": cornersValueMap[corners],
                             "--cmdk-mobile-keyboard-inset": `${keyboardInset ?? 0}px`,
-                            maxHeight: isMobile ? "95vh" : "45vh",
+                            "--cmdk-mobile-sheet-top-inset":
+                                "max(11rem, calc(env(safe-area-inset-top) + 8rem))",
+                            maxHeight: isMobile
+                                ? "calc(100dvh - var(--cmdk-mobile-sheet-top-inset))"
+                                : "45vh",
                             height: isMobile
-                                ? "min(95vh, calc(100dvh - 0.5rem))"
+                                ? "calc(100dvh - var(--cmdk-mobile-sheet-top-inset))"
                                 : undefined,
+                            ...(isMobile
+                                ? {
+                                      borderTopLeftRadius: cornersValueMap[corners],
+                                      borderTopRightRadius: cornersValueMap[corners],
+                                      borderBottomLeftRadius: "0px",
+                                      borderBottomRightRadius: "0px",
+                                  }
+                                : {}),
                             backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)",
                             boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)",
                             ...(borderColor
@@ -400,6 +416,9 @@ function CommandMenuInner({
         },
         [props.onOpenChange, setInputValue],
     )
+    const handleGestureTrigger = React.useCallback(() => {
+        handleOpenChange(true)
+    }, [handleOpenChange])
 
     const gesture = useMobileCommandGesture({
         enabled:
@@ -410,7 +429,7 @@ function CommandMenuInner({
         open: Boolean(props.open),
         holdMs: mobileConfig.gesture.holdMs,
         swipeUpPx: mobileConfig.gesture.swipeUpPx,
-        onTrigger: () => handleOpenChange(true),
+        onTrigger: handleGestureTrigger,
     })
 
     const mobileUI = React.useMemo<MobileUIContextValue>(
@@ -1175,9 +1194,6 @@ function CommandList({
 export { CommandMenu, CommandContent, CommandInput, CommandEmpty, CommandList }
 export type {
     CommandMenuProps,
-    CommandMenuMobileOptions,
-    CommandMenuMobileGesture,
-    CommandMenuMobileLayout,
     CommandInputProps,
     CommandEmptyProps,
     CommandListProps,

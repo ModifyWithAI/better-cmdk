@@ -13,6 +13,7 @@ export interface UseMobileCommandGestureOptions {
     activationZoneWidthPercent?: number
     activationZoneHeightPercent?: number
     bottomExclusionPx?: number
+    rightExclusionPx?: number
 }
 
 export interface UseMobileCommandGestureReturn {
@@ -40,6 +41,32 @@ function isExcludedTarget(target: EventTarget | null): boolean {
     return false
 }
 
+function isInActivationZone(
+    clientX: number,
+    clientY: number,
+    activationZoneWidthPercent: number,
+    activationZoneHeightPercent: number,
+    bottomExclusionPx: number,
+    rightExclusionPx: number,
+): boolean {
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    const zoneWidth = viewportWidth * activationZoneWidthPercent
+    const zoneXEnd = viewportWidth - rightExclusionPx
+    const zoneXStart = Math.max(0, zoneXEnd - zoneWidth)
+
+    const zoneYStart = viewportHeight * (1 - activationZoneHeightPercent)
+    const zoneYEnd = viewportHeight - bottomExclusionPx
+
+    return (
+        clientX >= zoneXStart &&
+        clientX <= zoneXEnd &&
+        clientY >= zoneYStart &&
+        clientY <= zoneYEnd
+    )
+}
+
 export function useMobileCommandGesture({
     enabled,
     open,
@@ -48,12 +75,19 @@ export function useMobileCommandGesture({
     onTrigger,
     movementTolerancePx = 10,
     horizontalCancelPx = 24,
-    activationZoneWidthPercent = 0.6,
-    activationZoneHeightPercent = 0.35,
-    bottomExclusionPx = 24,
+    activationZoneWidthPercent = 0.4,
+    activationZoneHeightPercent = 0.4,
+    bottomExclusionPx = 8,
+    rightExclusionPx = 0,
 }: UseMobileCommandGestureOptions): UseMobileCommandGestureReturn {
     const [showHint, setShowHint] = React.useState(false)
     const stateRef = React.useRef<GestureState | null>(null)
+    const lastTouchInZoneAtRef = React.useRef(0)
+    const onTriggerRef = React.useRef(onTrigger)
+
+    React.useEffect(() => {
+        onTriggerRef.current = onTrigger
+    }, [onTrigger])
 
     const clearState = React.useCallback(() => {
         const current = stateRef.current
@@ -77,24 +111,20 @@ export function useMobileCommandGesture({
             const touch = event.touches[0]
             if (!touch) return
 
-            const viewportWidth = window.innerWidth
-            const viewportHeight = window.innerHeight
-
-            const zoneWidth = viewportWidth * activationZoneWidthPercent
-            const zoneXStart = (viewportWidth - zoneWidth) / 2
-            const zoneXEnd = zoneXStart + zoneWidth
-
-            const zoneYStart = viewportHeight * (1 - activationZoneHeightPercent)
-            const zoneYEnd = viewportHeight - bottomExclusionPx
-
             if (
-                touch.clientX < zoneXStart ||
-                touch.clientX > zoneXEnd ||
-                touch.clientY < zoneYStart ||
-                touch.clientY > zoneYEnd
+                !isInActivationZone(
+                    touch.clientX,
+                    touch.clientY,
+                    activationZoneWidthPercent,
+                    activationZoneHeightPercent,
+                    bottomExclusionPx,
+                    rightExclusionPx,
+                )
             ) {
                 return
             }
+
+            lastTouchInZoneAtRef.current = Date.now()
 
             const timer = window.setTimeout(() => {
                 const current = stateRef.current
@@ -146,7 +176,7 @@ export function useMobileCommandGesture({
                 if (typeof navigator !== "undefined" && "vibrate" in navigator) {
                     navigator.vibrate(14)
                 }
-                onTrigger()
+                onTriggerRef.current()
             }
         }
 
@@ -158,18 +188,34 @@ export function useMobileCommandGesture({
             clearState()
         }
 
+        const onContextMenu = (event: MouseEvent) => {
+            const trackingGesture = stateRef.current !== null
+            const recentlyTouchedInZone =
+                Date.now() - lastTouchInZoneAtRef.current < holdMs + 1200
+
+            // Prevent mobile long-press OS context menus in the gesture zone.
+            if (trackingGesture || recentlyTouchedInZone) {
+                if (!trackingGesture && isExcludedTarget(event.target)) {
+                    return
+                }
+                event.preventDefault()
+            }
+        }
+
         document.addEventListener("touchstart", onTouchStart, { passive: true })
         document.addEventListener("touchmove", onTouchMove, { passive: true })
         document.addEventListener("touchend", onTouchEnd, { passive: true })
         document.addEventListener("touchcancel", onTouchCancel, {
             passive: true,
         })
+        document.addEventListener("contextmenu", onContextMenu)
 
         return () => {
             document.removeEventListener("touchstart", onTouchStart)
             document.removeEventListener("touchmove", onTouchMove)
             document.removeEventListener("touchend", onTouchEnd)
             document.removeEventListener("touchcancel", onTouchCancel)
+            document.removeEventListener("contextmenu", onContextMenu)
             clearState()
         }
     }, [
@@ -177,12 +223,12 @@ export function useMobileCommandGesture({
         open,
         holdMs,
         swipeUpPx,
-        onTrigger,
         movementTolerancePx,
         horizontalCancelPx,
         activationZoneWidthPercent,
         activationZoneHeightPercent,
         bottomExclusionPx,
+        rightExclusionPx,
         clearState,
     ])
 

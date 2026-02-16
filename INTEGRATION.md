@@ -407,6 +407,8 @@ type CommandMenuMobileOptions = {
 }
 ```
 
+Gesture behavior uses a lower-right activation zone by default: hold, then swipe up to open.
+
 ### CommandInput
 
 | Prop | Type | Default | Description |

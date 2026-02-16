@@ -6,6 +6,7 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 import * as React from "react"
 
 import { cn } from "../../lib/utils"
+import { CommandMenuContext } from "../../context/command-menu-context"
 import {
     Dialog,
     DialogDescription,
@@ -194,8 +195,24 @@ function CommandSeparator({
 function CommandItem({
     className,
     style,
+    onSelect,
+    closeOnSelect = true,
     ...props
-}: React.ComponentProps<typeof CommandPrimitive.Item>) {
+}: React.ComponentProps<typeof CommandPrimitive.Item> & {
+    closeOnSelect?: boolean
+}) {
+    const commandMenuContext = React.useContext(CommandMenuContext)
+
+    const handleSelect = React.useCallback(
+        (value: string) => {
+            onSelect?.(value)
+            if (closeOnSelect) {
+                commandMenuContext?.requestClose?.()
+            }
+        },
+        [onSelect, closeOnSelect, commandMenuContext],
+    )
+
     return (
         <CommandPrimitive.Item
             data-slot="command-item"
@@ -204,6 +221,7 @@ function CommandItem({
                 className,
             )}
             style={{ borderRadius: "var(--cmdk-radius, 0.375rem)", ...style }}
+            onSelect={handleSelect}
             {...props}
         />
     )

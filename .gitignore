@@ -1,9 +1,14 @@
-# dependencies (bun install)
+# dependencies
 node_modules
 
+# turborepo
+.turbo
+
 # output
+.next
 out
 dist
+build
 *.tgz
 
 # code coverage
@@ -12,8 +17,8 @@ coverage
 
 # logs
 logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+*.log
+report.*.json
 
 # dotenv environment variable files
 .env
@@ -21,14 +26,16 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .env.test.local
 .env.production.local
 .env.local
+.env*
 
 # caches
 .eslintcache
 .cache
 *.tsbuildinfo
 
-# IntelliJ based IDEs
+# IDE / OS
 .idea
-
-# Finder (MacOS) folder config
 .DS_Store
+
+# vercel
+.vercel

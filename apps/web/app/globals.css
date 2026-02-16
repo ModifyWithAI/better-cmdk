@@ -1,0 +1,293 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@source "../node_modules/better-cmdk";
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+
+  :root {
+    --radius: 0;
+    --background: 50 45% 95%;
+    --foreground: 0 0% 8%;
+    --card: 50 46% 99%;
+    --card-foreground: 0 0% 8%;
+    --popover: 50 46% 99%;
+    --popover-foreground: 0 0% 8%;
+    --primary: 0 0% 8%;
+    --primary-foreground: 50 45% 95%;
+    --secondary: 49 32% 88%;
+    --secondary-foreground: 0 0% 8%;
+    --muted: 49 32% 88%;
+    --muted-foreground: 0 0% 24%;
+    --accent: 36 23% 78%;
+    --accent-foreground: 0 0% 8%;
+    --destructive: 0 79% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 8%;
+    --input: 0 0% 8%;
+    --ring: 0 0% 8%;
+  }
+
+  body {
+    min-height: 100vh;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-brutal-body), monospace;
+    text-rendering: geometricPrecision;
+  }
+}
+
+.dark,
+.dark :root {
+  --background: 0 0% 7%;
+  --foreground: 50 45% 95%;
+  --card: 0 0% 10%;
+  --card-foreground: 50 45% 95%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 50 45% 95%;
+  --primary: 50 45% 95%;
+  --primary-foreground: 0 0% 7%;
+  --secondary: 0 0% 16%;
+  --secondary-foreground: 50 45% 95%;
+  --muted: 0 0% 16%;
+  --muted-foreground: 0 0% 80%;
+  --accent: 37 20% 64%;
+  --accent-foreground: 0 0% 7%;
+  --destructive: 0 74% 56%;
+  --destructive-foreground: 50 45% 95%;
+  --border: 50 45% 95%;
+  --input: 50 45% 95%;
+  --ring: 50 45% 95%;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --font-sans: var(--font-brutal-body);
+  --font-mono: var(--font-brutal-body);
+}
+
+@keyframes rise-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes track-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family:
+      var(--font-brutal-display), var(--font-brutal-body), sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  .animate-rise {
+    animation: rise-up 700ms cubic-bezier(0.16, 0.84, 0.32, 1) both;
+  }
+
+  .animate-track {
+    animation: track-scroll 26s linear infinite;
+  }
+}
+
+@layer base {
+  [data-slot="dialog-content"] [data-slot="command"] {
+    color: hsl(var(--foreground));
+    background: hsl(var(--card));
+  }
+
+  [data-slot="dialog-content"] [data-slot="command-input"] {
+    color: hsl(var(--foreground));
+  }
+
+  [data-slot="dialog-content"] [data-slot="command-input"]::placeholder {
+    color: hsl(var(--foreground) / 0.78);
+    opacity: 1;
+  }
+
+  [data-slot="dialog-content"] [data-slot="command-group"] [cmdk-group-heading],
+  [data-slot="dialog-content"] [data-slot="command-empty"],
+  [data-slot="dialog-content"] [data-slot="command-shortcut"] {
+    color: hsl(var(--foreground) / 0.84);
+  }
+
+  [data-slot="dialog-content"] [data-slot="command-item"] {
+    color: hsl(var(--foreground));
+  }
+
+  [data-slot="dialog-content"] [data-slot="command-item"] svg {
+    color: hsl(var(--foreground) / 0.9);
+  }
+}
+
+.code-highlight {
+  color: hsl(var(--foreground));
+  white-space: pre;
+}
+
+.code-highlight .token.comment,
+.code-highlight .token.prolog,
+.code-highlight .token.doctype,
+.code-highlight .token.cdata {
+  color: hsl(0 0% 44%);
+}
+
+.code-highlight .token.punctuation {
+  color: hsl(0 0% 28%);
+}
+
+.code-highlight .token.property,
+.code-highlight .token.tag,
+.code-highlight .token.constant,
+.code-highlight .token.symbol,
+.code-highlight .token.deleted {
+  color: hsl(10 78% 38%);
+}
+
+.code-highlight .token.boolean,
+.code-highlight .token.number {
+  color: hsl(31 90% 34%);
+}
+
+.code-highlight .token.selector,
+.code-highlight .token.attr-name,
+.code-highlight .token.string,
+.code-highlight .token.char,
+.code-highlight .token.builtin,
+.code-highlight .token.inserted {
+  color: hsl(136 55% 31%);
+}
+
+.code-highlight .token.operator,
+.code-highlight .token.entity,
+.code-highlight .token.url {
+  color: hsl(198 76% 33%);
+}
+
+.code-highlight .token.atrule,
+.code-highlight .token.attr-value,
+.code-highlight .token.keyword {
+  color: hsl(263 62% 40%);
+}
+
+.code-highlight .token.function,
+.code-highlight .token.class-name {
+  color: hsl(222 68% 39%);
+}
+
+.code-highlight .token.regex,
+.code-highlight .token.important,
+.code-highlight .token.variable {
+  color: hsl(43 90% 35%);
+}
+
+.dark .code-highlight {
+  color: hsl(50 45% 95%);
+}
+
+.dark .code-highlight .token.comment,
+.dark .code-highlight .token.prolog,
+.dark .code-highlight .token.doctype,
+.dark .code-highlight .token.cdata {
+  color: hsl(0 0% 62%);
+}
+
+.dark .code-highlight .token.punctuation {
+  color: hsl(50 20% 82%);
+}
+
+.dark .code-highlight .token.property,
+.dark .code-highlight .token.tag,
+.dark .code-highlight .token.constant,
+.dark .code-highlight .token.symbol,
+.dark .code-highlight .token.deleted {
+  color: hsl(16 88% 66%);
+}
+
+.dark .code-highlight .token.boolean,
+.dark .code-highlight .token.number {
+  color: hsl(35 92% 63%);
+}
+
+.dark .code-highlight .token.selector,
+.dark .code-highlight .token.attr-name,
+.dark .code-highlight .token.string,
+.dark .code-highlight .token.char,
+.dark .code-highlight .token.builtin,
+.dark .code-highlight .token.inserted {
+  color: hsl(84 68% 66%);
+}
+
+.dark .code-highlight .token.operator,
+.dark .code-highlight .token.entity,
+.dark .code-highlight .token.url {
+  color: hsl(195 83% 70%);
+}
+
+.dark .code-highlight .token.atrule,
+.dark .code-highlight .token.attr-value,
+.dark .code-highlight .token.keyword {
+  color: hsl(274 86% 75%);
+}
+
+.dark .code-highlight .token.function,
+.dark .code-highlight .token.class-name {
+  color: hsl(212 86% 72%);
+}
+
+.dark .code-highlight .token.regex,
+.dark .code-highlight .token.important,
+.dark .code-highlight .token.variable {
+  color: hsl(54 82% 68%);
+}
+
+.code-highlight .token.important,
+.code-highlight .token.bold {
+  font-weight: 700;
+}
+
+.code-highlight .token.italic {
+  font-style: italic;
+}

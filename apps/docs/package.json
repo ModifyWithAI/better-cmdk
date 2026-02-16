@@ -1,0 +1,10 @@
+{
+  "name": "@better-cmdk/docs",
+  "private": true,
+  "scripts": {
+    "dev": "mint dev --port 3050"
+  },
+  "devDependencies": {
+    "mint": "^4.2.315"
+  }
+}

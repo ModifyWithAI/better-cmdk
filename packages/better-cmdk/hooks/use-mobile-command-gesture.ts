@@ -84,10 +84,69 @@ export function useMobileCommandGesture({
     const stateRef = React.useRef<GestureState | null>(null)
     const lastTouchInZoneAtRef = React.useRef(0)
     const onTriggerRef = React.useRef(onTrigger)
+    const touchCalloutRestoreRef = React.useRef<{
+        applied: boolean
+        touchCallout: string
+        webkitUserSelect: string
+        userSelect: string
+    }>({
+        applied: false,
+        touchCallout: "",
+        webkitUserSelect: "",
+        userSelect: "",
+    })
 
     React.useEffect(() => {
         onTriggerRef.current = onTrigger
     }, [onTrigger])
+
+    const applyTouchCalloutSuppression = React.useCallback(() => {
+        if (typeof document === "undefined") return
+        if (touchCalloutRestoreRef.current.applied) return
+
+        const root = document.documentElement
+        const { style } = root
+        touchCalloutRestoreRef.current = {
+            applied: true,
+            touchCallout: style.getPropertyValue("-webkit-touch-callout"),
+            webkitUserSelect: style.getPropertyValue("-webkit-user-select"),
+            userSelect: style.getPropertyValue("user-select"),
+        }
+
+        style.setProperty("-webkit-touch-callout", "none")
+        style.setProperty("-webkit-user-select", "none")
+        style.setProperty("user-select", "none")
+    }, [])
+
+    const clearTouchCalloutSuppression = React.useCallback(() => {
+        if (typeof document === "undefined") return
+        const restore = touchCalloutRestoreRef.current
+        if (!restore.applied) return
+
+        const { style } = document.documentElement
+        if (restore.touchCallout) {
+            style.setProperty("-webkit-touch-callout", restore.touchCallout)
+        } else {
+            style.removeProperty("-webkit-touch-callout")
+        }
+        if (restore.webkitUserSelect) {
+            style.setProperty("-webkit-user-select", restore.webkitUserSelect)
+        } else {
+            style.removeProperty("-webkit-user-select")
+        }
+        if (restore.userSelect) {
+            style.setProperty("user-select", restore.userSelect)
+        } else {
+            style.removeProperty("user-select")
+        }
+
+        touchCalloutRestoreRef.current = {
+            applied: false,
+            touchCallout: "",
+            webkitUserSelect: "",
+            userSelect: "",
+        }
+    }, [])
 
     const clearState = React.useCallback(() => {
         const current = stateRef.current
@@ -96,7 +155,8 @@ export function useMobileCommandGesture({
         }
         stateRef.current = null
         setShowHint(false)
-    }, [])
+        clearTouchCalloutSuppression()
+    }, [clearTouchCalloutSuppression])
 
     React.useEffect(() => {
         if (!enabled || open || typeof window === "undefined") {
@@ -125,6 +185,12 @@ export function useMobileCommandGesture({
             }
 
             lastTouchInZoneAtRef.current = Date.now()
+            // iOS Safari can show native callout/context menus on long press
+            // even before our `contextmenu` handler runs.
+            applyTouchCalloutSuppression()
+            if (event.cancelable) {
+                event.preventDefault()
+            }
 
             const timer = window.setTimeout(() => {
                 const current = stateRef.current
@@ -152,6 +218,9 @@ export function useMobileCommandGesture({
 
             const current = stateRef.current
             if (!current) return
+            if (event.cancelable) {
+                event.preventDefault()
+            }
             const touch = event.touches[0]
             if (!touch) return
 
@@ -192,30 +261,39 @@ export function useMobileCommandGesture({
             const trackingGesture = stateRef.current !== null
             const recentlyTouchedInZone =
                 Date.now() - lastTouchInZoneAtRef.current < holdMs + 1200
+            const shouldSuppressByLocation = isInActivationZone(
+                event.clientX,
+                event.clientY,
+                activationZoneWidthPercent,
+                activationZoneHeightPercent,
+                bottomExclusionPx,
+                rightExclusionPx,
+            )
 
             // Prevent mobile long-press OS context menus in the gesture zone.
-            if (trackingGesture || recentlyTouchedInZone) {
+            if (trackingGesture || (recentlyTouchedInZone && shouldSuppressByLocation)) {
                 if (!trackingGesture && isExcludedTarget(event.target)) {
                     return
                 }
                 event.preventDefault()
+                event.stopPropagation()
             }
         }
 
-        document.addEventListener("touchstart", onTouchStart, { passive: true })
-        document.addEventListener("touchmove", onTouchMove, { passive: true })
+        document.addEventListener("touchstart", onTouchStart, { passive: false })
+        document.addEventListener("touchmove", onTouchMove, { passive: false })
         document.addEventListener("touchend", onTouchEnd, { passive: true })
         document.addEventListener("touchcancel", onTouchCancel, {
             passive: true,
         })
-        document.addEventListener("contextmenu", onContextMenu)
+        document.addEventListener("contextmenu", onContextMenu, true)
 
         return () => {
             document.removeEventListener("touchstart", onTouchStart)
             document.removeEventListener("touchmove", onTouchMove)
             document.removeEventListener("touchend", onTouchEnd)
             document.removeEventListener("touchcancel", onTouchCancel)
-            document.removeEventListener("contextmenu", onContextMenu)
+            document.removeEventListener("contextmenu", onContextMenu, true)
             clearState()
         }
     }, [
@@ -230,6 +308,7 @@ export function useMobileCommandGesture({
         bottomExclusionPx,
         rightExclusionPx,
         clearState,
+        applyTouchCalloutSuppression,
     ])
 
     return { showHint }

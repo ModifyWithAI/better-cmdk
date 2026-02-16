@@ -283,83 +283,101 @@ function CommandContent({
 
     return (
         <DialogPortal data-slot="dialog-portal">
-            {isMobile && (
-                <DialogPrimitive.Overlay
-                    className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-                />
-            )}
-            <div
-                className={cn(
-                    "fixed z-50 w-full max-w-[calc(100%-2rem)]",
-                    isMobile
-                        ? "inset-x-0 bottom-0 max-w-none px-0"
-                        : "top-1/3 left-[50%] translate-x-[-50%] translate-y-[-50%]",
+            <div className="bcmdk-root">
+                {isMobile && (
+                    <DialogPrimitive.Overlay
+                        className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+                        style={{
+                            position: "fixed",
+                            inset: 0,
+                            zIndex: 40,
+                            backgroundColor: "rgb(0 0 0 / 0.35)",
+                            backdropFilter: "blur(1px)",
+                            WebkitBackdropFilter: "blur(1px)",
+                        }}
+                    />
                 )}
-                style={
-                    isMobile
-                        ? undefined
-                        : ({ maxWidth: "45vw" } as React.CSSProperties)
-                }
-            >
-                <DialogPrimitive.Content
-                    data-slot="dialog-content"
-                    className={cn(
-                        "backdrop-blur-xl flex flex-col w-full overflow-hidden border border-input p-0 ring-0 outline-none",
-                        isMobile
-                            ? "border-x-0 border-b-0 will-change-transform data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 data-[state=open]:duration-300 data-[state=closed]:duration-200"
-                            : cornersMap[corners],
-                        className,
-                    )}
-                    style={
-                        {
-                            "--cmdk-radius": cornersValueMap[corners],
-                            "--cmdk-mobile-keyboard-inset": `${keyboardInset ?? 0}px`,
-                            "--cmdk-mobile-sheet-top-inset":
-                                "max(11rem, calc(env(safe-area-inset-top) + 8rem))",
-                            maxHeight: isMobile
-                                ? "calc(100dvh - var(--cmdk-mobile-sheet-top-inset))"
-                                : "45vh",
-                            height: isMobile
-                                ? "calc(100dvh - var(--cmdk-mobile-sheet-top-inset))"
-                                : undefined,
-                            ...(isMobile
-                                ? {
-                                      borderTopLeftRadius: cornersValueMap[corners],
-                                      borderTopRightRadius: cornersValueMap[corners],
-                                      borderBottomLeftRadius: "0px",
-                                      borderBottomRightRadius: "0px",
-                                  }
-                                : {}),
-                            backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)",
-                            boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)",
-                            ...(borderColor
-                                ? { "--tw-ring-color": borderColor }
-                                : {}),
-                        } as React.CSSProperties
-                    }
-                    {...props}
-                >
-                    {isMobile && (
-                        <div
-                            className="flex justify-center py-2"
-                            data-cmdk-mobile-gesture-ignore
-                            onTouchStart={handleDragHandleTouchStart}
-                            onTouchEnd={handleDragHandleTouchEnd}
-                        >
-                            <div className="h-1.5 w-11 rounded-full bg-muted-foreground/35" />
-                        </div>
-                    )}
-                    {children}
-                </DialogPrimitive.Content>
                 <div
                     className={cn(
-                        "flex justify-end select-none",
-                        isMobile && "hidden",
+                        "fixed z-50 w-full max-w-[calc(100%-2rem)]",
+                        isMobile
+                            ? "inset-x-0 bottom-0 max-w-none px-0"
+                            : "top-1/3 left-[50%] translate-x-[-50%] translate-y-[-50%]",
                     )}
+                    style={
+                        isMobile
+                            ? ({
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  maxWidth: "none",
+                                  paddingLeft: 0,
+                                  paddingRight: 0,
+                              } as React.CSSProperties)
+                            : ({ maxWidth: "45vw" } as React.CSSProperties)
+                    }
                 >
-                    <a href="https://better-cmdk.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground font-medium px-2 py-0.5 hover:text-foreground transition-colors" style={{ borderRadius: "0 0 0.375rem 0.375rem", marginRight: "1rem", backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderLeft: "1px solid var(--color-input)", borderRight: "1px solid var(--color-input)", borderBottom: "1px solid var(--color-input)", boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)" }}>
-                        powered by better-cmdk
-                    </a>
+                    <DialogPrimitive.Content
+                        data-slot="dialog-content"
+                        className={cn(
+                            "backdrop-blur-xl flex flex-col w-full overflow-hidden border border-input p-0 ring-0 outline-none",
+                            isMobile
+                                ? "border-x-0 border-b-0 will-change-transform data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 data-[state=open]:duration-300 data-[state=closed]:duration-200"
+                                : cornersMap[corners],
+                            className,
+                        )}
+                        style={
+                            {
+                                "--cmdk-radius": cornersValueMap[corners],
+                                "--cmdk-mobile-keyboard-inset": `${keyboardInset ?? 0}px`,
+                                "--cmdk-mobile-sheet-top-inset":
+                                    "max(11rem, calc(env(safe-area-inset-top) + 8rem))",
+                                maxHeight: isMobile
+                                    ? "calc(100dvh - var(--cmdk-mobile-sheet-top-inset))"
+                                    : "45vh",
+                                height: isMobile
+                                    ? "calc(100dvh - var(--cmdk-mobile-sheet-top-inset))"
+                                    : undefined,
+                                ...(isMobile
+                                    ? {
+                                          borderTopLeftRadius: cornersValueMap[corners],
+                                          borderTopRightRadius: cornersValueMap[corners],
+                                          borderBottomLeftRadius: "0px",
+                                          borderBottomRightRadius: "0px",
+                                      }
+                                    : {}),
+                                backgroundColor:
+                                    "color-mix(in oklch, oklch(var(--bcmdk-background)) 95%, transparent)",
+                                boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)",
+                                ...(borderColor
+                                    ? { "--tw-ring-color": borderColor }
+                                    : {}),
+                            } as React.CSSProperties
+                        }
+                        {...props}
+                    >
+                        {isMobile && (
+                            <div
+                                className="flex justify-center py-2"
+                                data-cmdk-mobile-gesture-ignore
+                                onTouchStart={handleDragHandleTouchStart}
+                                onTouchEnd={handleDragHandleTouchEnd}
+                            >
+                                <div className="h-1.5 w-11 rounded-full bg-muted-foreground/35" />
+                            </div>
+                        )}
+                        {children}
+                    </DialogPrimitive.Content>
+                    <div
+                        className={cn(
+                            "flex justify-end select-none",
+                            isMobile && "hidden",
+                        )}
+                    >
+                        <a href="https://better-cmdk.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground font-medium px-2 py-0.5 hover:text-foreground transition-colors" style={{ borderRadius: "0 0 0.375rem 0.375rem", marginRight: "1rem", backgroundColor: "color-mix(in oklch, oklch(var(--bcmdk-background)) 95%, transparent)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderLeft: "1px solid oklch(var(--bcmdk-input))", borderRight: "1px solid oklch(var(--bcmdk-input))", borderBottom: "1px solid oklch(var(--bcmdk-input))", boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)" }}>
+                            powered by better-cmdk
+                        </a>
+                    </div>
                 </div>
             </div>
         </DialogPortal>
@@ -524,7 +542,7 @@ function CommandMenuInner({
                         <CommandPrimitive
                             data-slot="command"
                             className={cn(
-                                "**:data-[slot=command-input-wrapper]:bg-transparent rounded-none bg-transparent **:data-[slot=command-input]:!h-11 **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0",
+                                "bcmdk-root **:data-[slot=command-input-wrapper]:bg-transparent rounded-none bg-transparent **:data-[slot=command-input]:!h-11 **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0",
                                 isMobileSheet
                                     ? "**:data-[slot=command-input-wrapper]:!h-[var(--cmdk-input-row-height)] pb-[env(safe-area-inset-bottom)]"
                                     : "**:data-[slot=command-input-wrapper]:!h-11",

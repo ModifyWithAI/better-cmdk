@@ -1,0 +1,123 @@
+@config "../tailwind.library.config.cjs";
+@import "tailwindcss/theme";
+@import "tailwindcss/utilities";
+
+.bcmdk-root {
+    --bcmdk-radius: 0.625rem;
+    --bcmdk-background: 1 0 0;
+    --bcmdk-foreground: 0.145 0 0;
+    --bcmdk-card: 1 0 0;
+    --bcmdk-card-foreground: 0.145 0 0;
+    --bcmdk-popover: 1 0 0;
+    --bcmdk-popover-foreground: 0.145 0 0;
+    --bcmdk-primary: 0.205 0 0;
+    --bcmdk-primary-foreground: 0.985 0 0;
+    --bcmdk-secondary: 0.97 0 0;
+    --bcmdk-secondary-foreground: 0.205 0 0;
+    --bcmdk-muted: 0.97 0 0;
+    --bcmdk-muted-foreground: 0.556 0 0;
+    --bcmdk-accent: 0.97 0 0;
+    --bcmdk-accent-foreground: 0.205 0 0;
+    --bcmdk-destructive: 0.577 0.245 27.325;
+    --bcmdk-destructive-foreground: 0.577 0.245 27.325;
+    --bcmdk-border: 0.922 0 0;
+    --bcmdk-input: 0.922 0 0;
+    --bcmdk-ring: 0.708 0 0;
+}
+
+.dark .bcmdk-root,
+.bcmdk-root.dark {
+    --bcmdk-background: 0.145 0 0;
+    --bcmdk-foreground: 0.985 0 0;
+    --bcmdk-card: 0.145 0 0;
+    --bcmdk-card-foreground: 0.985 0 0;
+    --bcmdk-popover: 0.145 0 0;
+    --bcmdk-popover-foreground: 0.985 0 0;
+    --bcmdk-primary: 0.985 0 0;
+    --bcmdk-primary-foreground: 0.205 0 0;
+    --bcmdk-secondary: 0.269 0 0;
+    --bcmdk-secondary-foreground: 0.985 0 0;
+    --bcmdk-muted: 0.269 0 0;
+    --bcmdk-muted-foreground: 0.708 0 0;
+    --bcmdk-accent: 0.269 0 0;
+    --bcmdk-accent-foreground: 0.985 0 0;
+    --bcmdk-destructive: 0.396 0.141 25.723;
+    --bcmdk-destructive-foreground: 0.637 0.237 25.331;
+    --bcmdk-border: 0.269 0 0;
+    --bcmdk-input: 0.269 0 0;
+    --bcmdk-ring: 0.439 0 0;
+}
+
+@keyframes bcmdk-enter {
+    from {
+        opacity: var(--bcmdk-enter-opacity, 1);
+        transform: translate3d(
+                var(--bcmdk-enter-x, 0),
+                var(--bcmdk-enter-y, 0),
+                0
+            )
+            scale(var(--bcmdk-enter-scale, 1));
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+@keyframes bcmdk-exit {
+    from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    to {
+        opacity: var(--bcmdk-exit-opacity, 1);
+        transform: translate3d(
+                var(--bcmdk-exit-x, 0),
+                var(--bcmdk-exit-y, 0),
+                0
+            )
+            scale(var(--bcmdk-exit-scale, 1));
+    }
+}
+
+.bcmdk-root .animate-in {
+    animation: bcmdk-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.bcmdk-root .animate-out {
+    animation: bcmdk-exit 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.bcmdk-root .fade-in-0 {
+    --bcmdk-enter-opacity: 0;
+}
+
+.bcmdk-root .fade-out-0 {
+    --bcmdk-exit-opacity: 0;
+}
+
+.bcmdk-root .zoom-in-95 {
+    --bcmdk-enter-scale: 0.95;
+}
+
+.bcmdk-root .zoom-out-95 {
+    --bcmdk-exit-scale: 0.95;
+}
+
+.bcmdk-root .slide-in-from-bottom-8 {
+    --bcmdk-enter-y: 2rem;
+}
+
+.bcmdk-root .slide-out-to-bottom-8 {
+    --bcmdk-exit-y: 2rem;
+}
+
+.bcmdk-root .slide-in-from-top-2 {
+    --bcmdk-enter-y: -0.5rem;
+}
+
+.bcmdk-root .slide-out-to-top-2 {
+    --bcmdk-exit-y: -0.5rem;
+}

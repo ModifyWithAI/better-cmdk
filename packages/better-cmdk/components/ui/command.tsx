@@ -24,7 +24,7 @@ function Command({
         <CommandPrimitive
             data-slot="command"
             className={cn(
-                "text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
+                "bcmdk-root text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
                 className,
             )}
             {...props}
@@ -39,17 +39,22 @@ function CommandDialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
     return (
         <DialogPortal data-slot="dialog-portal">
-            <DialogPrimitive.Content
-                data-slot="dialog-content"
-                className={cn(
-                    "backdrop-blur-xl fixed top-1/3 left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-xl border-none p-2 shadow-2xl ring-0 duration-200 outline-none sm:max-w-lg",
-                    className,
-                )}
-                style={{ backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)" }}
-                {...props}
-            >
-                {children}
-            </DialogPrimitive.Content>
+            <div className="bcmdk-root">
+                <DialogPrimitive.Content
+                    data-slot="dialog-content"
+                    className={cn(
+                        "backdrop-blur-xl fixed top-1/3 left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-hidden rounded-xl border-none p-2 shadow-2xl ring-0 duration-200 outline-none sm:max-w-lg",
+                        className,
+                    )}
+                    style={{
+                        backgroundColor:
+                            "color-mix(in oklch, oklch(var(--bcmdk-background)) 95%, transparent)",
+                    }}
+                    {...props}
+                >
+                    {children}
+                </DialogPrimitive.Content>
+            </div>
         </DialogPortal>
     )
 }
@@ -154,7 +159,8 @@ function CommandGroup({
                         "-webkit-backdrop-filter",
                         "blur(24px)",
                     )
-                    heading.style.backgroundColor = "color-mix(in oklch, var(--background) 95%, transparent)"
+                    heading.style.backgroundColor =
+                        "color-mix(in oklch, oklch(var(--bcmdk-background)) 95%, transparent)"
                     heading.style.borderRadius = "6px"
                     heading.style.setProperty("padding-top", "4px", "important")
                     heading.style.setProperty("padding-bottom", "4px", "important")

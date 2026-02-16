@@ -7,28 +7,39 @@
   "types": "./index.ts",
   "exports": {
     ".": {
-      "import": "./index.ts",
-      "types": "./index.ts"
+      "types": "./index.ts",
+      "style": "./index.css",
+      "import": "./index.ts"
     },
     "./utils": {
       "import": "./lib/utils.ts",
       "types": "./lib/utils.ts"
-    }
+    },
+    "./styles.css": "./dist/styles.css",
+    "./index.css": "./index.css"
   },
+  "style": "./index.css",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "files": [
     "dist",
-    "AGENTS.md"
+    "AGENTS.md",
+    "index.css"
   ],
   "scripts": {
+    "build:css": "tailwindcss -i ./styles/index.css -o ./dist/styles.css --minify && bun run scripts/sanitize-library-css.ts",
     "build:prompts": "bun run scripts/build-prompts.ts",
-    "build": "bun run --bun tsdown && bun run build:prompts",
-    "build:publish": "bun run --bun tsdown --publish && bun run build:prompts"
+    "build": "bun run --bun tsdown && bun run build:css && bun run build:prompts",
+    "build:publish": "bun run --bun tsdown --publish && bun run build:css && bun run build:prompts"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
     "@biomejs/biome": "^2.3.14",
     "@types/bun": "latest",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.1.18",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3"
   },

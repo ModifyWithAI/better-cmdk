@@ -1,0 +1,42 @@
+module.exports = {
+  content: [
+    './components/**/*.{ts,tsx}',
+    './context/**/*.{ts,tsx}',
+    './hooks/**/*.{ts,tsx}',
+    './lib/**/*.{ts,tsx}',
+    './index.ts',
+  ],
+  darkMode: ['class'],
+  important: '.bcmdk-root',
+  theme: {
+    extend: {
+      colors: {
+        background: 'oklch(var(--bcmdk-background) / <alpha-value>)',
+        foreground: 'oklch(var(--bcmdk-foreground) / <alpha-value>)',
+        card: 'oklch(var(--bcmdk-card) / <alpha-value>)',
+        'card-foreground': 'oklch(var(--bcmdk-card-foreground) / <alpha-value>)',
+        popover: 'oklch(var(--bcmdk-popover) / <alpha-value>)',
+        'popover-foreground': 'oklch(var(--bcmdk-popover-foreground) / <alpha-value>)',
+        primary: 'oklch(var(--bcmdk-primary) / <alpha-value>)',
+        'primary-foreground': 'oklch(var(--bcmdk-primary-foreground) / <alpha-value>)',
+        secondary: 'oklch(var(--bcmdk-secondary) / <alpha-value>)',
+        'secondary-foreground': 'oklch(var(--bcmdk-secondary-foreground) / <alpha-value>)',
+        muted: 'oklch(var(--bcmdk-muted) / <alpha-value>)',
+        'muted-foreground': 'oklch(var(--bcmdk-muted-foreground) / <alpha-value>)',
+        accent: 'oklch(var(--bcmdk-accent) / <alpha-value>)',
+        'accent-foreground': 'oklch(var(--bcmdk-accent-foreground) / <alpha-value>)',
+        destructive: 'oklch(var(--bcmdk-destructive) / <alpha-value>)',
+        'destructive-foreground': 'oklch(var(--bcmdk-destructive-foreground) / <alpha-value>)',
+        border: 'oklch(var(--bcmdk-border) / <alpha-value>)',
+        input: 'oklch(var(--bcmdk-input) / <alpha-value>)',
+        ring: 'oklch(var(--bcmdk-ring) / <alpha-value>)',
+      },
+      borderRadius: {
+        sm: 'calc(var(--bcmdk-radius) - 4px)',
+        md: 'calc(var(--bcmdk-radius) - 2px)',
+        lg: 'var(--bcmdk-radius)',
+        xl: 'calc(var(--bcmdk-radius) + 4px)',
+      },
+    },
+  },
+}

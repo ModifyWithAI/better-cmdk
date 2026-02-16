@@ -397,85 +397,42 @@ bun add better-cmdk modifywithai @ai-sdk/react ai
 
 ## Step 3: CSS Setup
 
-better-cmdk uses Tailwind CSS and shadcn/ui design tokens.
+better-cmdk ships precompiled styles with namespaced tokens.
 
 ### Tailwind v4
 
-Add to my main CSS file (next to the existing \`@import "tailwindcss"\`):
+Add to my main CSS file:
 
 \`\`\`css
-@source "node_modules/better-cmdk";
+@import "tailwindcss";
+@import "better-cmdk";
 \`\`\`
 
-If my app **already has shadcn/ui CSS variables**, verify they include \`--popover\`, \`--muted\`, \`--border\`, \`--ring\`, \`--primary\`, \`--primary-foreground\`. Don't overwrite existing variables.
+If my app wants custom theming, override better-cmdk's namespaced variables.
 
-If my app **does not have** these variables, add the minimal set:
+Add this minimal override block only when needed:
 
 \`\`\`css
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+.bcmdk-root {
+  --bcmdk-radius: 0.625rem;
+  --bcmdk-background: 1 0 0;
+  --bcmdk-foreground: 0.145 0 0;
+  --bcmdk-primary: 0.205 0 0;
+  --bcmdk-primary-foreground: 0.985 0 0;
+  --bcmdk-muted: 0.97 0 0;
+  --bcmdk-muted-foreground: 0.556 0 0;
+  --bcmdk-border: 0.922 0 0;
+  --bcmdk-input: 0.922 0 0;
+  --bcmdk-ring: 0.708 0 0;
 }
 \`\`\`
 
 ### Tailwind v3
 
-Add to \`tailwind.config.js\` or \`tailwind.config.ts\`:
-
-\`\`\`js
-content: [
-  // ... existing paths
-  "./node_modules/better-cmdk/**/*.{js,ts,jsx,tsx}",
-],
-\`\`\`
-
-If my app **does not have** shadcn/ui CSS variables, add the minimal set (hsl format):
+Use the same CSS import approach:
 
 \`\`\`css
-@layer base {
-  :root {
-    --radius: 0.5rem;
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-  }
-}
+@import "better-cmdk";
 \`\`\`
 
 ---

@@ -257,20 +257,20 @@ The provider is set up automatically by `CommandMenu`. If you need to use the co
 
 ### CSS variables
 
-better-cmdk uses shadcn/ui design tokens via CSS variables. Override them to match your brand:
+better-cmdk uses namespaced CSS variables. Override them to match your brand:
 
 ```css
-:root {
-  --primary: oklch(0.205 0 0);           /* Button and accent color */
-  --primary-foreground: oklch(0.985 0 0); /* Text on primary */
-  --popover: oklch(1 0 0);               /* Palette background */
-  --muted: oklch(0.97 0 0);              /* Subtle backgrounds */
-  --border: oklch(0.922 0 0);            /* Border color */
-  --radius: 0.625rem;                    /* Corner radius */
+.bcmdk-root {
+  --bcmdk-primary: 0.205 0 0;             /* Button and accent color */
+  --bcmdk-primary-foreground: 0.985 0 0;  /* Text on primary */
+  --bcmdk-popover: 1 0 0;                 /* Palette background */
+  --bcmdk-muted: 0.97 0 0;                /* Subtle backgrounds */
+  --bcmdk-border: 0.922 0 0;              /* Border color */
+  --bcmdk-radius: 0.625rem;               /* Corner radius */
 }
 ```
 
-For dark mode, redefine the variables inside a `.dark` class or `@media (prefers-color-scheme: dark)` block.
+For dark mode, redefine these variables under `.dark .bcmdk-root`.
 
 ### className props
 

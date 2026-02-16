@@ -22,47 +22,31 @@ npm install react react-dom tailwindcss
 
 ## Setup
 
-### 1. Configure Tailwind to scan the package
+### 1. Import the package styles
 
-Add the package to your Tailwind CSS sources in your main CSS file:
+Import the precompiled stylesheet in your main CSS file:
 
 ```css
 @import "tailwindcss";
-@source "node_modules/better-cmdk";
+@import "better-cmdk";
 ```
 
-### 2. Add CSS variables
+### 2. Optional: override better-cmdk tokens
 
-Add the required CSS variables to your global styles:
+Styles are isolated under `.bcmdk-root`. Override only the command menu tokens:
 
 ```css
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+.bcmdk-root {
+  --bcmdk-radius: 0.625rem;
+  --bcmdk-background: 1 0 0;
+  --bcmdk-foreground: 0.145 0 0;
+  --bcmdk-primary: 0.205 0 0;
+  --bcmdk-primary-foreground: 0.985 0 0;
+  --bcmdk-muted: 0.97 0 0;
+  --bcmdk-muted-foreground: 0.556 0 0;
+  --bcmdk-border: 0.922 0 0;
+  --bcmdk-input: 0.922 0 0;
+  --bcmdk-ring: 0.708 0 0;
 }
 ```
 
@@ -307,9 +291,9 @@ Children can also be a function to access internal state:
 
 ## Styling
 
-The component uses Tailwind CSS with the shadcn/ui design tokens. Customize by:
+better-cmdk ships namespaced styles under `.bcmdk-root` to avoid app-wide collisions. Customize by:
 
-1. Overriding CSS variables
+1. Overriding `--bcmdk-*` variables on `.bcmdk-root`
 2. Passing `className` props to components
 3. Using the `cn()` utility for conditional classes
 

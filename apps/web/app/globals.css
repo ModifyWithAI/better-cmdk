@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-
-@source "../node_modules/better-cmdk";
+@import "better-cmdk";
 
 @custom-variant dark (&:is(.dark *));
 

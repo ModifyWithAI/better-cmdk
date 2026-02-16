@@ -188,9 +188,6 @@ export function useMobileCommandGesture({
             // iOS Safari can show native callout/context menus on long press
             // even before our `contextmenu` handler runs.
             applyTouchCalloutSuppression()
-            if (event.cancelable) {
-                event.preventDefault()
-            }
 
             const timer = window.setTimeout(() => {
                 const current = stateRef.current
@@ -218,9 +215,6 @@ export function useMobileCommandGesture({
 
             const current = stateRef.current
             if (!current) return
-            if (event.cancelable) {
-                event.preventDefault()
-            }
             const touch = event.touches[0]
             if (!touch) return
 
@@ -233,6 +227,11 @@ export function useMobileCommandGesture({
                     clearState()
                 }
                 return
+            }
+
+            // Only block browser scrolling once the hold gesture is armed.
+            if (event.cancelable) {
+                event.preventDefault()
             }
 
             if (Math.abs(dx) > horizontalCancelPx) {

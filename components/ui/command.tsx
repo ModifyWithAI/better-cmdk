@@ -197,7 +197,7 @@ function CommandItem({
         <CommandPrimitive.Item
             data-slot="command-item"
             className={cn(
-                "data-[selected=true]:border-input data-[selected=true]:bg-input/50 [&_svg:not([class*='text-'])]:text-muted-foreground relative flex h-9 cursor-default items-center gap-2 border border-transparent px-3 text-sm font-medium outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+                "data-[selected=true]:border-input data-[selected=true]:bg-input/50 [&_svg:not([class*='text-'])]:text-muted-foreground relative flex h-[var(--cmdk-item-height,2.25rem)] cursor-default items-center gap-2 border border-transparent px-3 text-sm font-medium outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
                 className,
             )}
             style={{ borderRadius: "var(--cmdk-radius, 0.375rem)", ...style }}

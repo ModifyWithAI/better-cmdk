@@ -139,6 +139,7 @@ Commands are grouped by `group`, preserving the order they appear in the array. 
   commands={commands}
   commandsPlaceholder="Type a command..."   // default: "Search or ask AI..."
   commandsAskAILabel="Chat with AI"         // default: "Ask AI"
+  mobile={{ layout: "keyboard-last" }}
 />
 ```
 
@@ -381,12 +382,30 @@ Access mode, messages, and status to conditionally render different UI:
 | `onModeChange` | `(mode: "command" \| "chat") => void` | - | Called when switching between command and chat. |
 | `historyStorageKey` | `string` | `"cmdk-chat-history"` | localStorage key for chat history. |
 | `maxConversations` | `number` | `50` | Maximum saved conversations. |
+| `mobile` | `CommandMenuMobileOptions` | Mobile defaults enabled | Mobile sheet/gesture/keyboard behavior. |
 | `title` | `string` | `"Command Palette"` | Dialog title (screen reader only). |
 | `description` | `string` | `"Search for a command to run..."` | Dialog description (screen reader only). |
 | `corners` | `"none" \| "sm" \| "md" \| "lg" \| "xl"` | `"xl"` | Border radius preset. |
 | `borderColor` | `string` | - | Custom ring/border color. |
 | `className` | `string` | - | Class for the dialog content. |
 | `children` | `ReactNode \| (context) => ReactNode` | Default UI | Composition children or render prop. |
+
+### `mobile` options
+
+```ts
+type CommandMenuMobileOptions = {
+  enabled?: boolean // default: true
+  breakpoint?: number // default: 900
+  layout?: "keyboard-last" // default: "keyboard-last"
+  gesture?: false | {
+    enabled?: boolean // default: true
+    holdMs?: number // default: 350
+    swipeUpPx?: number // default: 56
+  }
+  showQuickActions?: boolean // default: true
+  quickActionsCount?: number // default: 4
+}
+```
 
 ### CommandInput
 

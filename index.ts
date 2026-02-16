@@ -34,6 +34,9 @@ export type {
     CommandInputProps,
     CommandListProps,
     CommandMenuCorners,
+    CommandMenuMobileGesture,
+    CommandMenuMobileLayout,
+    CommandMenuMobileOptions,
     CommandMenuProps,
 } from "./components/ui/command-menu"
 // Command Menu components

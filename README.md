@@ -167,6 +167,34 @@ Each command in the `commands` array supports:
 | `onModeChange` | `(mode: CommandMenuMode) => void` | — | Fires when switching between command/chat |
 | `historyStorageKey` | `string` | — | localStorage key for chat history |
 | `maxConversations` | `number` | — | Max saved chat conversations |
+| `mobile` | `CommandMenuMobileOptions` | mobile defaults enabled | Mobile sheet/gesture behavior configuration |
+
+### Mobile Configuration
+
+`CommandMenu` now includes a mobile-first sheet mode:
+
+- Long-press (`~350ms`) in the lower-middle viewport shows a hint: `Swipe up for Command Menu`
+- Swipe up opens the menu
+- Keyboard-last flow on mobile (sheet opens without forcing keyboard)
+- Keyboard-aware input/list insets via `visualViewport`
+
+```tsx
+<CommandMenu
+  open={open}
+  onOpenChange={setOpen}
+  commands={commands}
+  mobile={{
+    enabled: true,
+    layout: "keyboard-last",
+    gesture: {
+      holdMs: 350,
+      swipeUpPx: 56,
+    },
+    showQuickActions: true,
+    quickActionsCount: 4,
+  }}
+/>
+```
 
 ### AI Chat
 

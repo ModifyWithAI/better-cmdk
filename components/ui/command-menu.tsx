@@ -8,6 +8,7 @@ import {
 } from "../../lib/cmdk"
 import {
     ArrowUpIcon,
+    KeyboardIcon,
     MessageCircleIcon,
 } from "lucide-react"
 import { motion } from "motion/react"
@@ -37,6 +38,8 @@ import {
     DialogTitle,
 } from "./dialog"
 import { TelemetryErrorBoundary } from "./telemetry-error-boundary"
+import { useMobileCommandGesture } from "../../hooks/use-mobile-command-gesture"
+import { useVisualViewportInset } from "../../hooks/use-visual-viewport-inset"
 
 const noopApproval = (_r: { id: string; approved: boolean }) => {}
 
@@ -56,6 +59,122 @@ const cornersValueMap: Record<CommandMenuCorners, string> = {
     md: "0.375rem",
     lg: "0.5rem",
     xl: "0.75rem",
+}
+
+export type CommandMenuMobileLayout = "keyboard-last"
+
+export interface CommandMenuMobileGesture {
+    /** Enables/disables the long-press gesture trigger. */
+    enabled?: boolean
+    /** Hold duration before showing the swipe-up hint. */
+    holdMs?: number
+    /** Upward drag distance required to open the menu. */
+    swipeUpPx?: number
+}
+
+export interface CommandMenuMobileOptions {
+    /** Enable mobile command-sheet behavior. Defaults to true. */
+    enabled?: boolean
+    /** Viewport width threshold used for mobile layout detection. */
+    breakpoint?: number
+    /** Mobile interaction layout. */
+    layout?: CommandMenuMobileLayout
+    /** Gesture trigger settings. Set false to fully disable. */
+    gesture?: CommandMenuMobileGesture | false
+    /** Show quick actions when query is empty. */
+    showQuickActions?: boolean
+    /** Maximum quick actions to show. */
+    quickActionsCount?: number
+}
+
+interface ResolvedMobileConfig {
+    enabled: boolean
+    breakpoint: number
+    layout: CommandMenuMobileLayout
+    gesture: {
+        enabled: boolean
+        holdMs: number
+        swipeUpPx: number
+    }
+    showQuickActions: boolean
+    quickActionsCount: number
+}
+
+interface MobileUIContextValue {
+    isMobile: boolean
+    layout: CommandMenuMobileLayout
+    keyboardInset: number
+    showQuickActions: boolean
+    quickActionsCount: number
+}
+
+const DEFAULT_MOBILE_BREAKPOINT = 900
+
+const defaultMobileUIContext: MobileUIContextValue = {
+    isMobile: false,
+    layout: "keyboard-last",
+    keyboardInset: 0,
+    showQuickActions: false,
+    quickActionsCount: 4,
+}
+
+const MobileUIContext = React.createContext<MobileUIContextValue>(
+    defaultMobileUIContext,
+)
+
+function useMobileUIContext() {
+    return React.useContext(MobileUIContext)
+}
+
+function resolveMobileConfig(mobile?: CommandMenuMobileOptions): ResolvedMobileConfig {
+    const gestureEnabled = mobile?.gesture !== false
+    return {
+        enabled: mobile?.enabled ?? true,
+        breakpoint: mobile?.breakpoint ?? DEFAULT_MOBILE_BREAKPOINT,
+        layout: mobile?.layout ?? "keyboard-last",
+        gesture: {
+            enabled: gestureEnabled
+                ? (mobile?.gesture?.enabled ?? true)
+                : false,
+            holdMs: gestureEnabled ? (mobile?.gesture?.holdMs ?? 350) : 350,
+            swipeUpPx: gestureEnabled
+                ? (mobile?.gesture?.swipeUpPx ?? 56)
+                : 56,
+        },
+        showQuickActions: mobile?.showQuickActions ?? true,
+        quickActionsCount: mobile?.quickActionsCount ?? 4,
+    }
+}
+
+function useIsLikelyMobile(breakpoint: number, enabled: boolean): boolean {
+    const [isMobile, setIsMobile] = React.useState(false)
+
+    React.useEffect(() => {
+        if (!enabled || typeof window === "undefined") {
+            setIsMobile(false)
+            return
+        }
+
+        const widthMedia = window.matchMedia(`(max-width: ${breakpoint}px)`)
+        const coarsePointerMedia = window.matchMedia("(pointer: coarse)")
+
+        const update = () => {
+            setIsMobile(widthMedia.matches || coarsePointerMedia.matches)
+        }
+
+        update()
+        widthMedia.addEventListener("change", update)
+        coarsePointerMedia.addEventListener("change", update)
+        window.addEventListener("orientationchange", update)
+
+        return () => {
+            widthMedia.removeEventListener("change", update)
+            coarsePointerMedia.removeEventListener("change", update)
+            window.removeEventListener("orientationchange", update)
+        }
+    }, [breakpoint, enabled])
+
+    return isMobile
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -82,6 +201,8 @@ interface CommandMenuProps
     onModeChange?: (mode: CommandMenuMode) => void
     historyStorageKey?: string
     maxConversations?: number
+    /** Mobile-specific interaction + layout settings. */
+    mobile?: CommandMenuMobileOptions
     /** Declarative command definitions. Mutually exclusive with children. */
     commands?: CommandDefinition[]
     /** Placeholder for the command input when using `commands` prop. */
@@ -103,30 +224,96 @@ function CommandContent({
     children,
     corners = "xl",
     borderColor,
-    expanded,
+    isMobile,
+    keyboardInset,
+    onRequestClose,
     ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
     corners?: CommandMenuCorners
     borderColor?: string
-    expanded?: boolean
+    isMobile?: boolean
+    keyboardInset?: number
+    onRequestClose?: () => void
 }) {
+    const swipeStartRef = React.useRef<{ x: number; y: number } | null>(null)
+
+    const dismissOrClose = React.useCallback(() => {
+        if (typeof document === "undefined") return
+        const activeElement = document.activeElement
+        if (
+            activeElement instanceof HTMLElement &&
+            activeElement.hasAttribute("cmdk-input")
+        ) {
+            activeElement.blur()
+            return
+        }
+        onRequestClose?.()
+    }, [onRequestClose])
+
+    const handleDragHandleTouchStart = (
+        event: React.TouchEvent<HTMLDivElement>,
+    ) => {
+        if (event.touches.length !== 1) return
+        const touch = event.touches[0]
+        if (!touch) return
+        swipeStartRef.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+        }
+    }
+
+    const handleDragHandleTouchEnd = (
+        event: React.TouchEvent<HTMLDivElement>,
+    ) => {
+        const start = swipeStartRef.current
+        swipeStartRef.current = null
+        if (!start || event.changedTouches.length === 0) return
+
+        const touch = event.changedTouches[0]
+        if (!touch) return
+        const dx = touch.clientX - start.x
+        const dy = touch.clientY - start.y
+
+        if (dy > 56 && Math.abs(dx) < 42) {
+            dismissOrClose()
+        }
+    }
+
     return (
         <DialogPortal data-slot="dialog-portal">
+            {isMobile && (
+                <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[1px]" />
+            )}
             <div
-                className="fixed top-1/3 left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]"
-                style={{ maxWidth: "45vw" }}
+                className={cn(
+                    "fixed z-50 w-full max-w-[calc(100%-2rem)]",
+                    isMobile
+                        ? "inset-x-0 bottom-0 max-w-none px-0"
+                        : "top-1/3 left-[50%] translate-x-[-50%] translate-y-[-50%]",
+                )}
+                style={
+                    isMobile
+                        ? undefined
+                        : ({ maxWidth: "45vw" } as React.CSSProperties)
+                }
             >
                 <DialogPrimitive.Content
                     data-slot="dialog-content"
                     className={cn(
                         "backdrop-blur-xl flex flex-col w-full overflow-hidden border border-input p-0 ring-0 outline-none",
-                        cornersMap[corners],
+                        isMobile
+                            ? "rounded-none rounded-t-2xl border-x-0 border-b-0"
+                            : cornersMap[corners],
                         className,
                     )}
                     style={
                         {
                             "--cmdk-radius": cornersValueMap[corners],
-                            maxHeight: "45vh",
+                            "--cmdk-mobile-keyboard-inset": `${keyboardInset ?? 0}px`,
+                            maxHeight: isMobile ? "95vh" : "45vh",
+                            height: isMobile
+                                ? "min(95vh, calc(100dvh - 0.5rem))"
+                                : undefined,
                             backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)",
                             boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)",
                             ...(borderColor
@@ -136,9 +323,24 @@ function CommandContent({
                     }
                     {...props}
                 >
+                    {isMobile && (
+                        <div
+                            className="flex justify-center py-2"
+                            data-cmdk-mobile-gesture-ignore
+                            onTouchStart={handleDragHandleTouchStart}
+                            onTouchEnd={handleDragHandleTouchEnd}
+                        >
+                            <div className="h-1.5 w-11 rounded-full bg-muted-foreground/35" />
+                        </div>
+                    )}
                     {children}
                 </DialogPrimitive.Content>
-                <div className="flex justify-end select-none">
+                <div
+                    className={cn(
+                        "flex justify-end select-none",
+                        isMobile && "hidden",
+                    )}
+                >
                     <a href="https://better-cmdk.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground font-medium px-2 py-0.5 hover:text-foreground transition-colors" style={{ borderRadius: "0 0 0.375rem 0.375rem", marginRight: "1rem", backgroundColor: "color-mix(in oklch, var(--background) 95%, transparent)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderLeft: "1px solid var(--color-input)", borderRight: "1px solid var(--color-input)", borderBottom: "1px solid var(--color-input)", boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)" }}>
                         powered by better-cmdk
                     </a>
@@ -167,6 +369,7 @@ function CommandMenuInner({
     commands,
     commandsPlaceholder = "Search for commands or ask AI...",
     commandsAskAILabel = "Ask AI",
+    mobile,
     ...props
 }: Omit<CommandMenuProps, "chatEndpoint" | "chat" | "onModeChange">) {
     const {
@@ -175,13 +378,20 @@ function CommandMenuInner({
         switchToCommand,
         messages,
         isEnabled,
-        sendMessage,
-        addToolApprovalResponse,
         setInputValue,
         inputValue,
     } = useCommandMenuContext()
 
-    const expanded = mode === "chat" || inputValue.length > 0
+    const mobileConfig = React.useMemo(
+        () => resolveMobileConfig(mobile),
+        [mobile],
+    )
+    const isLikelyMobile = useIsLikelyMobile(
+        mobileConfig.breakpoint,
+        mobileConfig.enabled,
+    )
+    const isMobileSheet = mobileConfig.enabled && isLikelyMobile
+    const keyboardInset = useVisualViewportInset(isMobileSheet && !!props.open)
 
     const handleOpenChange = React.useCallback(
         (open: boolean) => {
@@ -189,6 +399,35 @@ function CommandMenuInner({
             props.onOpenChange?.(open)
         },
         [props.onOpenChange, setInputValue],
+    )
+
+    const gesture = useMobileCommandGesture({
+        enabled:
+            isMobileSheet &&
+            !props.open &&
+            Boolean(props.onOpenChange) &&
+            mobileConfig.gesture.enabled,
+        open: Boolean(props.open),
+        holdMs: mobileConfig.gesture.holdMs,
+        swipeUpPx: mobileConfig.gesture.swipeUpPx,
+        onTrigger: () => handleOpenChange(true),
+    })
+
+    const mobileUI = React.useMemo<MobileUIContextValue>(
+        () => ({
+            isMobile: isMobileSheet,
+            layout: mobileConfig.layout,
+            keyboardInset,
+            showQuickActions: mobileConfig.showQuickActions,
+            quickActionsCount: mobileConfig.quickActionsCount,
+        }),
+        [
+            isMobileSheet,
+            mobileConfig.layout,
+            keyboardInset,
+            mobileConfig.showQuickActions,
+            mobileConfig.quickActionsCount,
+        ],
     )
 
     const renderChildren = () => {
@@ -239,30 +478,69 @@ function CommandMenuInner({
     }, [props.open, handleOpenChange])
 
     return (
-        <Dialog {...props} onOpenChange={handleOpenChange}>
-            <CommandContent
-                className={className}
-                corners={corners}
-                borderColor={borderColor}
-                expanded={expanded}
-                onEscapeKeyDown={handleEscapeKeyDown}
-            >
-                <DialogHeader className="sr-only">
-                    <DialogTitle>{title}</DialogTitle>
-                    <DialogDescription>{description}</DialogDescription>
-                </DialogHeader>
-                <CommandPrimitive
-                    data-slot="command"
-                    className={cn(
-                        "**:data-[slot=command-input-wrapper]:bg-transparent rounded-none bg-transparent **:data-[slot=command-input]:!h-11 **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0 **:data-[slot=command-input-wrapper]:!h-11",
-                        "text-popover-foreground flex h-full min-h-0 w-full flex-col overflow-hidden",
-                    )}
-                    style={{ borderRadius: "var(--cmdk-radius, 0.75rem)" }}
+        <>
+            <Dialog {...props} onOpenChange={handleOpenChange}>
+                <CommandContent
+                    className={className}
+                    corners={corners}
+                    borderColor={borderColor}
+                    isMobile={isMobileSheet}
+                    keyboardInset={keyboardInset}
+                    onRequestClose={() => handleOpenChange(false)}
+                    onEscapeKeyDown={handleEscapeKeyDown}
+                    onOpenAutoFocus={(event) => {
+                        if (
+                            isMobileSheet &&
+                            mobileConfig.layout === "keyboard-last"
+                        ) {
+                            event.preventDefault()
+                        }
+                    }}
                 >
-                    {renderChildren()}
-                </CommandPrimitive>
-            </CommandContent>
-        </Dialog>
+                    <DialogHeader className="sr-only">
+                        <DialogTitle>{title}</DialogTitle>
+                        <DialogDescription>{description}</DialogDescription>
+                    </DialogHeader>
+                    <MobileUIContext.Provider value={mobileUI}>
+                        <CommandPrimitive
+                            data-slot="command"
+                            className={cn(
+                                "**:data-[slot=command-input-wrapper]:bg-transparent rounded-none bg-transparent **:data-[slot=command-input]:!h-11 **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0",
+                                isMobileSheet
+                                    ? "**:data-[slot=command-input-wrapper]:!h-[var(--cmdk-input-row-height)] pb-[env(safe-area-inset-bottom)]"
+                                    : "**:data-[slot=command-input-wrapper]:!h-11",
+                                "text-popover-foreground flex h-full min-h-0 w-full flex-col overflow-hidden",
+                            )}
+                            style={
+                                {
+                                    borderRadius: "var(--cmdk-radius, 0.75rem)",
+                                    "--cmdk-item-height": isMobileSheet
+                                        ? "3.125rem"
+                                        : "2.25rem",
+                                    "--cmdk-input-row-height": isMobileSheet
+                                        ? "3.5rem"
+                                        : "2.75rem",
+                                } as React.CSSProperties
+                            }
+                        >
+                            {renderChildren()}
+                        </CommandPrimitive>
+                    </MobileUIContext.Provider>
+                </CommandContent>
+            </Dialog>
+            {gesture.showHint && (
+                <div
+                    className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-input bg-background/95 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-md"
+                    style={{
+                        bottom: "calc(env(safe-area-inset-bottom) + 2rem)",
+                    }}
+                    data-cmdk-mobile-gesture-ignore
+                >
+                    <ArrowUpIcon className="size-3.5" />
+                    Swipe up for Command Menu
+                </div>
+            )}
+        </>
     )
 }
 
@@ -276,6 +554,7 @@ function CommandMenu({
     commands,
     commandsPlaceholder,
     commandsAskAILabel,
+    mobile,
     ...props
 }: CommandMenuProps) {
     return (
@@ -293,6 +572,7 @@ function CommandMenu({
                     commands={commands}
                     commandsPlaceholder={commandsPlaceholder}
                     commandsAskAILabel={commandsAskAILabel}
+                    mobile={mobile}
                     {...props}
                 />
             </TelemetryErrorBoundary>
@@ -322,6 +602,9 @@ function CommandInput({
         switchToChat,
         startNewChat,
     } = useCommandMenuContext()
+    const { isMobile, layout, keyboardInset } = useMobileUIContext()
+    const [isFocused, setIsFocused] = React.useState(false)
+    const inputRef = React.useRef<HTMLInputElement>(null)
 
     const handleSend = () => {
         if (inputValue.trim() && mode === "chat") {
@@ -353,18 +636,53 @@ function CommandInput({
         }
     }
 
-    const showList = mode === "chat" || inputValue.length > 0
+    const showList =
+        mode === "chat" ||
+        inputValue.length > 0 ||
+        (isMobile && layout === "keyboard-last")
+
+    const showKeyboardButton =
+        isMobile &&
+        layout === "keyboard-last" &&
+        !isFocused &&
+        mode === "command"
+
+    const handleInputFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+        setIsFocused(true)
+        props.onFocus?.(event)
+    }
+
+    const handleInputBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+        setIsFocused(false)
+        props.onBlur?.(event)
+    }
+
+    const wrapperStyle = isMobile
+        ? ({
+              marginBottom:
+                  keyboardInset > 0 ? `${keyboardInset}px` : undefined,
+          } as React.CSSProperties)
+        : undefined
+
+    const inputProps = {
+        ...props,
+        onFocus: handleInputFocus,
+        onBlur: handleInputBlur,
+    }
 
     return (
         <div
             data-slot="command-input-wrapper"
             className={cn(
-                "order-2 flex h-11 items-center gap-2 px-6 transition-[margin,border-color] duration-200",
+                "order-2 flex h-[var(--cmdk-input-row-height,2.75rem)] items-center gap-2 px-6 transition-[margin,border-color] duration-200",
+                isMobile && "px-4",
                 showList ? "border-t border-input mt-0" : "border-t border-transparent mt-0",
             )}
+            style={wrapperStyle}
         >
             <CommandPrimitive.Input
                 data-slot="command-input"
+                ref={inputRef}
                 value={inputValue}
                 onValueChange={setInputValue}
                 onKeyDown={handleKeyDown}
@@ -372,9 +690,21 @@ function CommandInput({
                     "placeholder:text-muted-foreground flex h-10 w-full bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
                     className,
                 )}
-                {...props}
+                {...inputProps}
                 placeholder={mode === "chat" ? "Ask AI..." : props.placeholder}
             />
+            {showKeyboardButton && (
+                <button
+                    type="button"
+                    onClick={() => inputRef.current?.focus()}
+                    className="flex items-center justify-center size-7 shrink-0 border border-input bg-background text-muted-foreground hover:text-foreground transition-colors"
+                    style={{ borderRadius: "var(--cmdk-radius, 0.75rem)" }}
+                    aria-label="Type a command"
+                    data-cmdk-mobile-gesture-ignore
+                >
+                    <KeyboardIcon className="size-4" />
+                </button>
+            )}
             {showSendButton && mode === "chat" && (
                 <button
                     type="button"
@@ -409,6 +739,7 @@ function CommandEmpty({
         isEnabled,
         startNewChat,
     } = useCommandMenuContext()
+    const { isMobile } = useMobileUIContext()
 
     // cmdk's filtered.count excludes forceMount items (like ask-ai), so
     // count === 0 means no regular commands matched the search query.
@@ -454,6 +785,7 @@ function CommandEmpty({
                 onSelect={handleAskAI}
                 className={cn(
                     "data-[selected=true]:border-input data-[selected=true]:bg-input/50 relative flex cursor-default items-center gap-3 border border-transparent px-3 py-2 text-sm outline-hidden select-none",
+                    isMobile && "min-h-12 py-3",
                     className,
                 )}
                 style={{ borderRadius: "var(--cmdk-radius, 0.75rem)" }}
@@ -463,10 +795,12 @@ function CommandEmpty({
                 <div className="flex flex-col items-start gap-0.5">
                     <span className="font-medium">{label}</span>
                 </div>
-                <span className="ml-auto flex items-center gap-1">
-                    <Kbd>⌘</Kbd>
-                    <Kbd>↵</Kbd>
-                </span>
+                {!isMobile && (
+                    <span className="ml-auto flex items-center gap-1">
+                        <Kbd>⌘</Kbd>
+                        <Kbd>↵</Kbd>
+                    </span>
+                )}
             </CommandPrimitive.Item>
         </CommandPrimitive.Group>
     )
@@ -575,43 +909,68 @@ function CommandListFromDefinitions({
         }
     }
 
+    const { inputValue, mode } = useCommandMenuContext()
+    const { isMobile, layout, showQuickActions, quickActionsCount } =
+        useMobileUIContext()
     const grouped = groupCommands(commands)
+    const showQuickActionsGroup =
+        isMobile &&
+        layout === "keyboard-last" &&
+        showQuickActions &&
+        mode === "command" &&
+        inputValue.length === 0
+
+    const quickActions = showQuickActionsGroup
+        ? commands.filter((cmd) => !cmd.disabled).slice(0, quickActionsCount)
+        : []
+
+    const quickActionSet = new Set(quickActions.map((cmd) => cmd.name))
+
+    const renderCommandItem = (cmd: CommandDefinition) => {
+        const label = cmd.label ?? cmd.name
+        // Merge keywords: include label (if different from name) plus explicit keywords
+        const allKeywords: string[] = [...(cmd.keywords ?? [])]
+        if (cmd.label && cmd.label !== cmd.name) {
+            allKeywords.push(cmd.label)
+        }
+
+        return (
+            <CommandItem
+                key={cmd.name}
+                value={cmd.name}
+                keywords={allKeywords.length > 0 ? allKeywords : undefined}
+                disabled={cmd.disabled}
+                onSelect={() => cmd.onSelect?.()}
+                className={cn(isMobile && "min-h-12 py-3")}
+            >
+                {cmd.icon}
+                {label}
+                {cmd.shortcut && !isMobile && (
+                    <CommandShortcut>{cmd.shortcut}</CommandShortcut>
+                )}
+            </CommandItem>
+        )
+    }
 
     return (
         <>
             <CommandInput placeholder={placeholder} showSendButton />
             <CommandList>
+                {showQuickActionsGroup && quickActions.length > 0 && (
+                    <CommandGroup heading="Quick Actions">
+                        {quickActions.map((cmd) => renderCommandItem(cmd))}
+                    </CommandGroup>
+                )}
                 {grouped.map((group, gi) => {
-                    const items = group.items.map((cmd) => {
-                        const label = cmd.label ?? cmd.name
-                        // Merge keywords: include label (if different from name) plus explicit keywords
-                        const allKeywords: string[] = [...(cmd.keywords ?? [])]
-                        if (cmd.label && cmd.label !== cmd.name) {
-                            allKeywords.push(cmd.label)
-                        }
+                    const visibleItems = showQuickActionsGroup
+                        ? group.items.filter((cmd) => !quickActionSet.has(cmd.name))
+                        : group.items
 
-                        return (
-                            <CommandItem
-                                key={cmd.name}
-                                value={cmd.name}
-                                keywords={
-                                    allKeywords.length > 0
-                                        ? allKeywords
-                                        : undefined
-                                }
-                                disabled={cmd.disabled}
-                                onSelect={() => cmd.onSelect?.()}
-                            >
-                                {cmd.icon}
-                                {label}
-                                {cmd.shortcut && (
-                                    <CommandShortcut>
-                                        {cmd.shortcut}
-                                    </CommandShortcut>
-                                )}
-                            </CommandItem>
-                        )
-                    })
+                    if (visibleItems.length === 0) {
+                        return null
+                    }
+
+                    const items = visibleItems.map((cmd) => renderCommandItem(cmd))
 
                     if (group.heading) {
                         return (
@@ -649,6 +1008,7 @@ function CommandList({
     children,
     actions,
     actionsHeading = "Actions",
+    style,
     ...props
 }: CommandListProps) {
     const {
@@ -658,13 +1018,13 @@ function CommandList({
         sendMessage,
         addToolApprovalResponse,
         agenticActions,
-        requestClose,
         switchToChat,
         startNewChat,
         conversations,
         loadConversation,
         inputValue,
     } = useCommandMenuContext()
+    const { isMobile, layout, keyboardInset } = useMobileUIContext()
 
     const stableSendMessage = React.useCallback(
         (msg: { text: string }) => sendMessage(msg.text),
@@ -678,6 +1038,7 @@ function CommandList({
                 data-slot="command-list"
                 className={cn(
                     "order-1 min-h-0 flex-1 overflow-hidden px-3 flex flex-col",
+                    isMobile && "px-2",
                     className,
                 )}
             >
@@ -737,22 +1098,38 @@ function CommandList({
         sendMessage(label)
     }
 
-    const showList = inputValue.length > 0
+    const showList =
+        inputValue.length > 0 || (isMobile && layout === "keyboard-last")
+    const listHeight = isMobile
+        ? "calc(100% - var(--cmdk-input-row-height, 3.5rem))"
+        : "calc(45vh - 2.75rem)"
+
+    const mergedListStyle = {
+        overscrollBehavior: "contain",
+        paddingBottom:
+            keyboardInset > 0
+                ? `${keyboardInset + 8}px`
+                : isMobile
+                  ? "env(safe-area-inset-bottom)"
+                  : undefined,
+        ...style,
+    } as React.CSSProperties
 
     return (
         <motion.div
             initial={false}
-            animate={{ height: showList ? "calc(45vh - 2.75rem)" : 0 }}
+            animate={{ height: showList ? listHeight : 0 }}
             transition={{ type: "spring", duration: 0.25, bounce: 0 }}
-            className="order-1 min-h-0 overflow-hidden px-3"
+            className={cn("order-1 min-h-0 overflow-hidden px-3", isMobile && "px-2")}
         >
             <CommandPrimitive.List
                 data-slot="command-list"
                 className={cn(
                     "overflow-x-hidden overflow-y-auto overscroll-contain pt-2 h-full",
+                    isMobile && "pt-1",
                     className,
                 )}
-                style={{ overscrollBehavior: "contain" }}
+                style={mergedListStyle}
                 {...props}
             >
                 {otherChildren}
@@ -764,6 +1141,7 @@ function CommandList({
                                 value={`chat-history-${convo.id}`}
                                 keywords={[convo.title]}
                                 onSelect={() => loadConversation(convo.id)}
+                                className={cn(isMobile && "min-h-12 py-3")}
                             >
                                 <MessageCircleIcon className="size-4" />
                                 <span className="truncate">{convo.title}</span>
@@ -781,6 +1159,7 @@ function CommandList({
                                 key={action.name}
                                 value={action.label ?? action.name}
                                 onSelect={() => handleActionSelect(action)}
+                                className={cn(isMobile && "min-h-12 py-3")}
                             >
                                 {action.label ?? action.name}
                             </CommandItem>
@@ -796,6 +1175,9 @@ function CommandList({
 export { CommandMenu, CommandContent, CommandInput, CommandEmpty, CommandList }
 export type {
     CommandMenuProps,
+    CommandMenuMobileOptions,
+    CommandMenuMobileGesture,
+    CommandMenuMobileLayout,
     CommandInputProps,
     CommandEmptyProps,
     CommandListProps,

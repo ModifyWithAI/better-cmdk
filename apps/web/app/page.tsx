@@ -33,21 +33,18 @@ const flowSteps = [
     title: "Define action contracts",
     description:
       "Define each action with a name, label, options, and execute handler. Reuse the same actions for search and AI tools.",
-    image: "/step-1.svg",
   },
   {
     number: "02",
     title: "Attach any chat backend",
     description:
       "Connect modifywithai.com, Vercel AI SDK, or your own endpoint through the ExternalChat interface.",
-    image: "/step-2.png",
   },
   {
     number: "03",
     title: "Search, ask, approve",
     description:
       "Users can run actions by typing or asking in natural language. Add approval steps before sensitive actions run.",
-    image: "/step-3.png",
   },
 ];
 
@@ -400,7 +397,7 @@ Use the instructions there to complete the integration.`;
           </p>
 
           <h1
-            className="font-display animate-rise mt-7 text-[clamp(3.25rem,15vw,10rem)] leading-[0.82] uppercase"
+            className="font-display animate-rise mt-7 text-balance text-[clamp(3.25rem,15vw,10rem)] leading-[0.82] uppercase"
             style={{ animationDelay: "120ms" }}
           >
             Command.
@@ -410,7 +407,7 @@ Use the instructions there to complete the integration.`;
           </h1>
 
           <p
-            className="animate-rise mt-7 max-w-2xl font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/90 sm:text-base"
+            className="animate-rise mt-7 max-w-2xl text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/90 sm:text-base"
             style={{ animationDelay: "220ms" }}
           >
             better-cmdk combines fuzzy search, AI chat, and action approvals in
@@ -457,10 +454,10 @@ Use the instructions there to complete the integration.`;
 
         <section ref={howItWorksRef} className="mx-auto max-w-6xl px-5 py-16">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
-            <h2 className="font-display text-[clamp(2.8rem,9vw,6.5rem)] leading-[0.84] uppercase">
+            <h2 className="font-display text-balance text-[clamp(2.8rem,9vw,6.5rem)] leading-[0.84] uppercase">
               Minimal Flow
             </h2>
-            <p className="max-w-xs border-2 border-foreground bg-card px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground/90">
+            <p className="max-w-xs text-balance border-2 border-foreground bg-card px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground/90">
               Three blocks: actions, provider, command menu.
             </p>
           </div>
@@ -474,22 +471,12 @@ Use the instructions there to complete the integration.`;
                 <p className="font-display text-6xl leading-none">
                   {step.number}
                 </p>
-                <h3 className="mt-3 font-mono text-sm font-semibold uppercase tracking-[0.12em]">
+                <h3 className="mt-3 text-balance font-mono text-sm font-semibold uppercase tracking-[0.12em]">
                   {step.title}
                 </h3>
-                <p className="mt-3 font-mono text-sm leading-relaxed text-foreground/90">
+                <p className="mt-3 text-balance font-mono text-sm leading-relaxed text-foreground/90">
                   {step.description}
                 </p>
-
-                <figure className="mt-5 border-4 border-foreground bg-muted">
-                  <Image
-                    src={step.image}
-                    alt={step.title}
-                    width={1200}
-                    height={675}
-                    className="aspect-video w-full object-cover"
-                  />
-                </figure>
               </article>
             ))}
           </div>
@@ -504,11 +491,11 @@ Use the instructions there to complete the integration.`;
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-background/88">
                 Provider Integration
               </p>
-              <h2 className="font-display mt-4 text-[clamp(2.8rem,8vw,6.5rem)] leading-[0.84] uppercase">
+              <h2 className="font-display mt-4 text-balance text-[clamp(2.8rem,8vw,6.5rem)] leading-[0.84] uppercase">
                 Any Provider.
                 <span className="block">Same Commands.</span>
               </h2>
-              <p className="mt-4 max-w-xl font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-background/92">
+              <p className="mt-4 max-w-xl text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-background/92">
                 Pass an ExternalChat provider object or set a chat endpoint.
                 better-cmdk handles mode switching, streaming responses, and
                 action approval prompts.
@@ -562,10 +549,10 @@ Use the instructions there to complete the integration.`;
 
         <section ref={codeRef} className="mx-auto max-w-6xl px-5 py-16">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-            <h2 className="font-display text-[clamp(2.6rem,8vw,5.5rem)] leading-[0.86] uppercase">
+            <h2 className="font-display text-balance text-[clamp(2.6rem,8vw,5.5rem)] leading-[0.86] uppercase">
               Wire It Once
             </h2>
-            <p className="max-w-sm font-mono text-sm uppercase tracking-[0.08em] text-foreground/90">
+            <p className="max-w-sm text-balance font-mono text-sm uppercase tracking-[0.08em] text-foreground/90">
               One action list powers command search and AI tool calls.
             </p>
           </div>
@@ -578,10 +565,10 @@ Use the instructions there to complete the integration.`;
             <p className="inline-flex border-2 border-foreground bg-card px-3 py-1 font-mono text-[11px] uppercase tracking-[0.16em]">
               Setup Options
             </p>
-            <h2 className="font-display mt-4 text-[clamp(2.4rem,8vw,5.8rem)] leading-[0.84] uppercase text-foreground">
+            <h2 className="font-display mt-4 text-balance text-[clamp(2.4rem,8vw,5.8rem)] leading-[0.84] uppercase text-foreground">
               Two Setup Methods
             </h2>
-            <p className="mt-4 max-w-3xl font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
+            <p className="mt-4 max-w-3xl text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
               Fastest path: copy the agent prompt and run it in your coding
               agent. Manual path: follow the docs and wire each step yourself.
             </p>
@@ -597,7 +584,7 @@ Use the instructions there to complete the integration.`;
                   </span>
                 </div>
 
-                <p className="mt-4 font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
+                <p className="mt-4 text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
                   Copy this prompt, paste it into your coding agent, then answer
                   follow-up questions. The agent installs better-cmdk and
                   follows AGENTS.md.
@@ -630,10 +617,10 @@ Use the instructions there to complete the integration.`;
                 <span className="inline-flex border-2 border-foreground px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em]">
                   Manual Setup
                 </span>
-                <h3 className="font-display mt-4 text-[clamp(2rem,5vw,3.2rem)] leading-[0.88] uppercase">
+                <h3 className="font-display mt-4 text-balance text-[clamp(2rem,5vw,3.2rem)] leading-[0.88] uppercase">
                   Read The Docs
                 </h3>
-                <p className="mt-4 font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
+                <p className="mt-4 text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
                   Use this path if you want to install, wire providers, and
                   define commands manually.
                 </p>
@@ -650,7 +637,7 @@ Use the instructions there to complete the integration.`;
                   <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-foreground/88">
                     Best For
                   </p>
-                  <p className="mt-3 font-mono text-xs leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
+                  <p className="mt-3 text-balance font-mono text-xs leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
                     Teams with strict review flows or custom architecture
                     decisions.
                   </p>
@@ -749,12 +736,12 @@ Use the instructions there to complete the integration.`;
             </p>
             <h3
               id="setup-modal-title"
-              className="font-display mt-5 text-[clamp(2rem,6vw,4rem)] leading-[0.86] uppercase"
+              className="font-display mt-5 text-balance text-[clamp(2rem,6vw,4rem)] leading-[0.86] uppercase"
             >
               Prompt Copied
             </h3>
 
-            <p className="mt-5 font-mono text-base leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
+            <p className="mt-5 text-balance font-mono text-base leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
               Paste the prompt into your coding agent, then follow these steps.
             </p>
 

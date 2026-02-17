@@ -688,17 +688,14 @@ Do NOT assume answers to any questions.`;
               Built By The Dynamic UI Company
             </div>
 
-            <a
-              href="https://modifywithai.com"
-              className="group block border-b-4 border-background px-4 pt-5 pb-4 transition-colors hover:bg-background hover:text-foreground sm:px-6 sm:pt-7 sm:pb-6"
-            >
+            <div className="group block border-b-4 border-background px-4 pt-5 pb-4 transition-colors hover:bg-background hover:text-foreground sm:px-6 sm:pt-7 sm:pb-6">
               <span className="font-display block text-[clamp(3.3rem,15vw,9.6rem)] leading-[0.76] tracking-[-0.03em]">
                 BETTER-CMDK
               </span>
               <span className="mt-2 inline-flex border-2 border-current px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em]">
                 React Command + AI Surface
               </span>
-            </a>
+            </div>
 
             <div className="grid sm:grid-cols-4">
               <a

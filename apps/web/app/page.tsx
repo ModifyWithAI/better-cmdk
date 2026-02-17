@@ -190,7 +190,9 @@ export default function Home() {
 After installation, read and follow:
 node_modules/better-cmdk/AGENTS.md
 
-Use the instructions there to complete the integration.`;
+Use the instructions there to complete the integration.
+
+Do NOT assume answers to any questions.`;
 
   const copyAgentSetupPrompt = () => {
     navigator.clipboard.writeText(agentSetupPrompt);

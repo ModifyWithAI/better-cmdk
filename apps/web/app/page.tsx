@@ -749,8 +749,7 @@ Use the instructions there to complete the integration.`;
               <li>1. Open your project in your coding agent.</li>
               <li>2. Paste the copied AI setup prompt into a new task/chat.</li>
               <li>
-                3. Let the agent install better-cmdk and read
-                node_modules/better-cmdk/AGENTS.md.
+                3. Let the agent setup better-cmdk.
               </li>
               <li>
                 4. Answer the agent&apos;s follow-up questions and review the

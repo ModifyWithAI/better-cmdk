@@ -46,7 +46,7 @@
     },
     "packages/better-cmdk": {
       "name": "better-cmdk",
-      "version": "0.0.12",
+      "version": "0.0.15",
       "dependencies": {
         "@ai-sdk/react": "^3.0.0",
         "@json-render/core": "^0.2.0",

@@ -22,35 +22,36 @@ import { useRouter } from "next/navigation"
 import { CommandMenu, type CommandDefinition } from "better-cmdk"
 import { LayoutDashboardIcon, SettingsIcon, SunMoonIcon } from "lucide-react"
 
-// REPLACE with discovered commands from my codebase
-const commands: CommandDefinition[] = [
-  {
-    name: "dashboard",
-    label: "Go to Dashboard",
-    group: "Navigation",
-    icon: <LayoutDashboardIcon className="size-4" />,
-    shortcut: "⌘D",
-    onSelect: () => router.push("/dashboard"),
-  },
-  {
-    name: "settings",
-    label: "Settings",
-    group: "Navigation",
-    icon: <SettingsIcon className="size-4" />,
-    shortcut: "⌘,",
-    onSelect: () => router.push("/settings"),
-  },
-  {
-    name: "dark-mode",
-    label: "Toggle dark mode",
-    group: "Appearance",
-    icon: <SunMoonIcon className="size-4" />,
-    onSelect: () => document.documentElement.classList.toggle("dark"),
-  },
-]
-
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
+
+  // REPLACE with discovered commands from my codebase
+  const commands: CommandDefinition[] = [
+    {
+      name: "dashboard",
+      label: "Go to Dashboard",
+      group: "Navigation",
+      icon: <LayoutDashboardIcon className="size-4" />,
+      shortcut: "⌘D",
+      onSelect: () => router.push("/dashboard"),
+    },
+    {
+      name: "settings",
+      label: "Settings",
+      group: "Navigation",
+      icon: <SettingsIcon className="size-4" />,
+      shortcut: "⌘,",
+      onSelect: () => router.push("/settings"),
+    },
+    {
+      name: "dark-mode",
+      label: "Toggle dark mode",
+      group: "Appearance",
+      icon: <SunMoonIcon className="size-4" />,
+      onSelect: () => document.documentElement.classList.toggle("dark"),
+    },
+  ]
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -157,7 +158,8 @@ export function CommandPalette() {
 // app/routes/api.chat.ts
 import { openai } from "@ai-sdk/openai"
 import { streamText, convertToModelMessages } from "ai"
-import type { UIMessage, ActionFunctionArgs } from "ai"
+import type { UIMessage } from "ai"
+import type { ActionFunctionArgs } from "react-router"
 
 export async function action({ request }: ActionFunctionArgs) {
   const { messages }: { messages: UIMessage[] } = await request.json()
@@ -353,7 +355,7 @@ better-cmdk is a command palette with AI chat for React. Your task is to install
 Before making changes, detect:
 - Tailwind version: v4 (\`@import "tailwindcss"\` in CSS) vs v3 (\`tailwind.config.js/ts\`)
 - Existing shadcn/ui: check for \`@/components/ui/command\` or similar shadcn command components
-- Package manager: \`bun.lockb\` → bun, \`pnpm-lock.yaml\` → pnpm, \`yarn.lock\` → yarn, \`package-lock.json\` → npm
+- Package manager: \`bun.lock\` or \`bun.lockb\` → bun, \`pnpm-lock.yaml\` → pnpm, \`yarn.lock\` → yarn, \`package-lock.json\` → npm
 
 Also ask me:
 
@@ -375,22 +377,44 @@ Docs: https://github.com/ModifyWithAI/better-cmdk/blob/main/INTEGRATION.md
 ## Step 2: Install
 
 **Use the package manager already installed** — check for lockfiles.
+Do not switch package managers.
 
 ### No AI:
 \`\`\`bash
+# bun
 bun add better-cmdk
+# pnpm
+pnpm add better-cmdk
+# npm
+npm install better-cmdk
+# yarn
+yarn add better-cmdk
 \`\`\`
 
 ### Built-in chat:
 \`\`\`bash
+# bun
 bun add better-cmdk ai @ai-sdk/react @ai-sdk/openai
+# pnpm
+pnpm add better-cmdk ai @ai-sdk/react @ai-sdk/openai
+# npm
+npm install better-cmdk ai @ai-sdk/react @ai-sdk/openai
+# yarn
+yarn add better-cmdk ai @ai-sdk/react @ai-sdk/openai
 \`\`\`
 
 Substitute \`@ai-sdk/anthropic\`, \`@ai-sdk/google\`, etc. based on my preferred AI provider.
 
 ### ModifyWithAI:
 \`\`\`bash
+# bun
 bun add better-cmdk modifywithai @ai-sdk/react ai
+# pnpm
+pnpm add better-cmdk modifywithai @ai-sdk/react ai
+# npm
+npm install better-cmdk modifywithai @ai-sdk/react ai
+# yarn
+yarn add better-cmdk modifywithai @ai-sdk/react ai
 \`\`\`
 
 ---

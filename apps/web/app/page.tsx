@@ -3,6 +3,7 @@
 import { type CommandDefinition, CommandMenu } from "better-cmdk";
 import {
   ArrowUpRight,
+  BookOpen,
   Check,
   Clipboard,
   Code,
@@ -12,7 +13,6 @@ import {
   Moon,
   Plug,
   Search,
-  Sparkles,
   Sun,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -194,7 +194,7 @@ Use the instructions there to complete the integration.
 
 Do NOT assume answers to any questions.`;
 
-  const copyAgentSetupPrompt = () => {
+  const copyAISetupPrompt = () => {
     navigator.clipboard.writeText(agentSetupPrompt);
     setAgentPromptCopied(true);
     if (promptCopiedTimerRef.current !== null) {
@@ -264,12 +264,12 @@ Do NOT assume answers to any questions.`;
       onSelect: toggleTheme,
     },
     {
-      name: "copy-agent-prompt",
-      label: "Copy agent setup prompt",
+      name: "copy-ai-prompt",
+      label: "Copy AI setup prompt",
       group: "Actions",
-      icon: <Sparkles className="size-4" />,
+      icon: <Clipboard className="size-4" />,
       onSelect: () => {
-        copyAgentSetupPrompt();
+        copyAISetupPrompt();
         setOpen(false);
       },
     },
@@ -320,7 +320,7 @@ Do NOT assume answers to any questions.`;
       name: "modifywithai",
       label: "modifywithai.com",
       group: "Links",
-      icon: <Sparkles className="size-4" />,
+      icon: <Plug className="size-4" />,
       onSelect: () => openExternal("https://modifywithai.com"),
     },
   ];
@@ -374,6 +374,26 @@ Do NOT assume answers to any questions.`;
               <span className="hidden dark:block">Light</span>
             </button>
 
+            <Link
+              href="https://github.com/ModifyWithAI/better-cmdk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center gap-2 border-2 border-foreground bg-card px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5"
+            >
+              <Github className="size-3.5" />
+              GitHub
+            </Link>
+
+            <a
+              href="https://better-cmdk.com/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center gap-2 border-2 border-foreground bg-card px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5"
+            >
+              <BookOpen className="size-3.5" />
+              Docs
+            </a>
+
             <button
               type="button"
               onClick={() => setOpen(true)}
@@ -391,12 +411,23 @@ Do NOT assume answers to any questions.`;
 
       <main className="relative z-10">
         <section className="mx-auto max-w-6xl px-5 pt-14 pb-18 sm:pt-18">
-          <p
-            className="animate-rise inline-flex border-2 border-foreground bg-card px-3 py-1 font-mono text-[11px] uppercase tracking-[0.18em]"
-            style={{ animationDelay: "40ms" }}
-          >
-            AI command menu for React
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p
+              className="animate-rise inline-flex border-2 border-foreground bg-card px-3 py-1 font-mono text-[11px] uppercase tracking-[0.18em]"
+              style={{ animationDelay: "40ms" }}
+            >
+              AI command menu for React
+            </p>
+            <Link
+              href="https://github.com/ModifyWithAI/better-cmdk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="animate-rise inline-flex items-center gap-1.5 border-2 border-foreground bg-background px-3 py-1 font-mono text-[11px] uppercase tracking-[0.16em] transition-transform hover:-translate-y-0.5"
+              style={{ animationDelay: "80ms" }}
+            >
+              Open source
+            </Link>
+          </div>
 
           <h1
             className="font-display animate-rise mt-7 text-balance text-[clamp(3.25rem,15vw,10rem)] leading-[0.82] uppercase"
@@ -413,8 +444,8 @@ Do NOT assume answers to any questions.`;
             style={{ animationDelay: "220ms" }}
           >
             better-cmdk combines fuzzy search, AI chat, and action approvals in
-            one menu. Define actions once, then reuse them in command mode and
-            AI mode.
+            one open-source menu. Define actions once, then reuse them in
+            command mode and AI mode.
           </p>
 
           <div
@@ -437,7 +468,7 @@ Do NOT assume answers to any questions.`;
             </button>
             <button
               type="button"
-              onClick={copyAgentSetupPrompt}
+              onClick={copyAISetupPrompt}
               className="inline-flex h-12 items-center gap-2 border-4 border-foreground bg-card px-5 font-mono text-xs uppercase tracking-[0.16em] transition-transform hover:-translate-y-1"
             >
               <Clipboard className="size-4" />
@@ -594,7 +625,7 @@ Do NOT assume answers to any questions.`;
 
                 <button
                   type="button"
-                  onClick={copyAgentSetupPrompt}
+                  onClick={copyAISetupPrompt}
                   className="mt-5 inline-flex h-11 items-center gap-2 border-4 border-foreground bg-foreground px-4 font-mono text-xs uppercase tracking-[0.14em] text-background transition-transform hover:-translate-y-1"
                 >
                   {agentPromptCopied ? (
@@ -602,7 +633,7 @@ Do NOT assume answers to any questions.`;
                   ) : (
                     <Clipboard className="size-4" />
                   )}
-                  {agentPromptCopied ? "Prompt Copied" : "Copy Agent Prompt"}
+                  {agentPromptCopied ? "Prompt Copied" : "Copy AI Setup Prompt"}
                 </button>
 
                 <div className="mt-5 border-2 border-foreground bg-background p-4">
@@ -674,21 +705,21 @@ Do NOT assume answers to any questions.`;
                 href="https://better-cmdk.com/docs"
                 className="inline-flex items-center justify-between border-b-2 border-background px-4 py-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors hover:bg-background hover:text-foreground sm:border-b-0 sm:border-r-2 sm:px-5 sm:py-4"
               >
-                Setup Docs
+                Docs
                 <ArrowUpRight className="size-4" />
               </a>
-              <Link
-                href="/integrations"
-                className="inline-flex items-center justify-between border-b-2 border-background px-4 py-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors hover:bg-background hover:text-foreground sm:border-b-0 sm:border-r-2 sm:px-5 sm:py-4"
-              >
-                Integrations
-                <ArrowUpRight className="size-4" />
-              </Link>
               <a
                 href="https://github.com/ModifyWithAI/better-cmdk"
                 className="inline-flex items-center justify-between border-b-2 border-background px-4 py-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors hover:bg-background hover:text-foreground sm:border-b-0 sm:border-r-2 sm:px-5 sm:py-4"
               >
-                GitHub Repo
+                GitHub
+                <ArrowUpRight className="size-4" />
+              </a>
+              <a
+                href="https://www.npmjs.com/package/better-cmdk"
+                className="inline-flex items-center justify-between border-b-2 border-background px-4 py-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors hover:bg-background hover:text-foreground sm:border-b-0 sm:border-r-2 sm:px-5 sm:py-4"
+              >
+                npm
                 <ArrowUpRight className="size-4" />
               </a>
               <a

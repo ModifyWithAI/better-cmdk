@@ -253,7 +253,7 @@ interface ExternalChat {
   status: "ready" | "submitted" | "streaming" | "error"
   error: Error | null
   addToolApprovalResponse?: (response: { id: string; approved: boolean }) => void
-  agenticActions?: CommandAction[]
+  agenticActions?: readonly CommandAction[]
 }
 ```
 
@@ -401,7 +401,7 @@ Gesture behavior uses a lower-right activation zone by default: hold, then swipe
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `actions` | `CommandAction[]` | - | Actions to render as items. Falls back to `agenticActions` from context. |
+| `actions` | `readonly CommandAction[]` | - | Actions to render as items. Falls back to `agenticActions` from context. |
 | `actionsHeading` | `string` | `"Actions"` | Heading for the actions group. |
 | `className` | `string` | - | Class for the list container. |
 

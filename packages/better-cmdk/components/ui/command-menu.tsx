@@ -848,20 +848,25 @@ function CommandEmpty({
  * Compatible with ActionOption from modifywithai.
  */
 export interface CommandActionOption {
-    type: string
+    type: "string" | "number" | "boolean"
     description?: string
     required?: boolean
 }
 
+type CommandActionExecuteHandler<TOptions> = {
+    bivarianceHack(options: TOptions): void
+}["bivarianceHack"]
+
 /**
  * Minimal action interface compatible with ActionDefinition from modifywithai.
- * Only `name` and `execute` are needed — all other ActionDefinition fields are ignored.
+ * Used as read-only metadata for rendering action items in the command list.
+ * `execute` is kept for compatibility but is not invoked by better-cmdk.
  */
 export interface CommandAction {
     name: string
     label?: string
-    options?: Record<string, CommandActionOption>
-    execute?: (options: Record<string, unknown>) => void
+    options?: Partial<Record<string, CommandActionOption>>
+    execute?: CommandActionExecuteHandler<Record<string, unknown>>
 }
 
 /**
@@ -1035,7 +1040,7 @@ function CommandListFromDefinitions({
 interface CommandListProps
     extends React.ComponentProps<typeof CommandPrimitive.List> {
     /** Actions to render as CommandItems. Compatible with ActionDefinition[]. */
-    actions?: CommandAction[]
+    actions?: readonly CommandAction[]
     /** Heading for the auto-rendered actions group */
     actionsHeading?: string
 }

@@ -26,7 +26,7 @@ export interface ExternalChat {
         id: string
         approved: boolean
     }) => void
-    agenticActions?: CommandAction[]
+    agenticActions?: readonly CommandAction[]
 }
 
 export interface CommandMenuContextValue {
@@ -48,7 +48,7 @@ export interface CommandMenuContextValue {
         id: string
         approved: boolean
     }) => void
-    agenticActions?: CommandAction[]
+    agenticActions?: readonly CommandAction[]
     requestClose?: () => void
     // Chat history
     conversations: ChatConversation[]

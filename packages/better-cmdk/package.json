@@ -1,6 +1,6 @@
 {
   "name": "better-cmdk",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "type": "module",
   "main": "./index.ts",
   "module": "./index.ts",
@@ -15,8 +15,8 @@
       "import": "./lib/utils.ts",
       "types": "./lib/utils.ts"
     },
-    "./styles.css": "./dist/styles.css",
-    "./index.css": "./index.css"
+    "./index.css": "./index.css",
+    "./styles.css": "./dist/styles.css"
   },
   "style": "./index.css",
   "sideEffects": [
@@ -31,7 +31,8 @@
     "build:css": "tailwindcss -i ./styles/index.css -o ./dist/styles.css --minify && bun run scripts/sanitize-library-css.ts",
     "build:prompts": "bun run scripts/build-prompts.ts",
     "build": "bun run --bun tsdown && bun run build:css && bun run build:prompts",
-    "build:publish": "bun run --bun tsdown --publish && bun run build:css && bun run build:prompts"
+    "fix:publish-exports": "bun run scripts/fix-publish-css-exports.ts",
+    "build:publish": "bun run --bun tsdown --publish && bun run fix:publish-exports && bun run build:css && bun run build:prompts"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.18",

@@ -229,6 +229,7 @@ function CommandContent({
     isMobile,
     keyboardInset,
     onRequestClose,
+    onInteractOutside,
     ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
     corners?: CommandMenuCorners
@@ -278,6 +279,21 @@ function CommandContent({
 
         if (dy > 56 && Math.abs(dx) < 42) {
             dismissOrClose()
+        }
+    }
+
+    const handleInteractOutside: React.ComponentProps<
+        typeof DialogPrimitive.Content
+    >["onInteractOutside"] = (event) => {
+        onInteractOutside?.(event)
+        if (event.defaultPrevented) return
+
+        const target = event.target
+        if (
+            target instanceof HTMLElement &&
+            target.closest("[data-cmdk-powered-link]")
+        ) {
+            event.preventDefault()
         }
     }
 
@@ -355,6 +371,7 @@ function CommandContent({
                             } as React.CSSProperties
                         }
                         {...props}
+                        onInteractOutside={handleInteractOutside}
                     >
                         {isMobile && (
                             <div
@@ -370,12 +387,22 @@ function CommandContent({
                     </DialogPrimitive.Content>
                     <div
                         className={cn(
-                            "flex justify-end select-none",
+                            "flex justify-end select-none pointer-events-auto",
                             isMobile && "hidden",
                         )}
                     >
-                        <a href="https://better-cmdk.com" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground font-medium px-2 py-0.5 hover:text-foreground transition-colors" style={{ borderRadius: "0 0 0.375rem 0.375rem", marginRight: "1rem", backgroundColor: "color-mix(in oklch, oklch(var(--bcmdk-background)) 95%, transparent)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderLeft: "1px solid oklch(var(--bcmdk-input))", borderRight: "1px solid oklch(var(--bcmdk-input))", borderBottom: "1px solid oklch(var(--bcmdk-input))", boxShadow: "4px 4px 12px -2px rgba(0,0,0,0.12), -4px 4px 12px -2px rgba(0,0,0,0.12), 0 8px 16px -4px rgba(0,0,0,0.1)" }}>
-                            powered by better-cmdk
+                        <a
+                            data-cmdk-powered-link
+                            href="https://better-cmdk.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="pointer-events-auto inline-flex items-center border-2 border-input bg-background px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-foreground no-underline transition-colors hover:bg-foreground hover:text-background hover:no-underline"
+                            style={{
+                                borderRadius: "0 0 0.25rem 0.25rem",
+                                marginRight: "1rem",
+                            }}
+                        >
+                            BETTER-CMDK
                         </a>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 {
   "name": "better-cmdk",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "type": "module",
   "main": "./index.ts",
   "module": "./index.ts",

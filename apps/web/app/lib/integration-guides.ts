@@ -20,15 +20,15 @@ export const integrationGuides: IntegrationGuide[] = [
     keyword: "better-cmdk modifywithai integration",
     pageTitle: "better-cmdk + modifywithai.com Integration Guide",
     metaDescription:
-      "Integrate better-cmdk with modifywithai.com to run agentic actions with approval gates in your React app.",
+      "Integrate better-cmdk with modifywithai.com to run AI actions with approval gates in your React app.",
     heroSummary:
       "Use modifywithai.com when you want AI chat that can execute real app actions, not just answer questions.",
     intro:
-      "This setup is the fastest path to an agentic command menu. You connect one assistant object, expose safe actions, and let users approve sensitive runs before execution.",
+      "This setup is the fastest path to an action-enabled command menu. You connect one assistant object, expose safe actions, and let users approve sensitive runs before execution.",
     bestFor: [
       "Internal tools where users need AI to execute workflows",
       "Teams that want approval prompts before destructive actions",
-      "Products that need both command search and agentic chat in one surface",
+      "Products that need both command search and AI chat in one surface",
     ],
     setupChecklist: [
       "Install better-cmdk and modifywithai using the package manager already used in your repo.",
@@ -50,7 +50,7 @@ export const integrationGuides: IntegrationGuide[] = [
       {
         question: "Do I need modifywithai.com to use better-cmdk?",
         answer:
-          "No. better-cmdk works as a command palette without AI. modifywithai.com is an optional path for agentic execution.",
+          "No. better-cmdk works as a command palette without AI. modifywithai.com is an optional path for AI-driven action execution.",
       },
       {
         question: "When should I add approval prompts?",
@@ -74,15 +74,15 @@ export const integrationGuides: IntegrationGuide[] = [
     heroSummary:
       "Use this path when you want a clean streaming chat endpoint and full control over model/provider selection.",
     intro:
-      "This setup keeps your AI pipeline inside your own API route. better-cmdk handles command UX while your endpoint handles models, prompts, and provider configuration.",
+      "This setup keeps your AI pipeline inside your own API route. Choose it when you need model and infrastructure control; better-cmdk's default hosted chat is only a free trial path (no signup, 10 requests per 10 minutes).",
     bestFor: [
       "Teams already shipping Vercel AI SDK routes",
       "Apps that need provider flexibility without changing UI components",
-      "Products that want chat in the command menu before adding agentic actions",
+      "Products that want chat in the command menu before adding AI actions",
     ],
     setupChecklist: [
       "Install better-cmdk with ai and @ai-sdk/react dependencies.",
-      "Create app/api/chat/route.ts with streaming response support.",
+      "If you need custom model control, create app/api/chat/route.ts with streaming response support.",
       "Pass chatEndpoint to CommandMenu and test responses in both themes.",
       "Add request logging and rate limits before production rollout.",
     ],
@@ -98,7 +98,13 @@ export const integrationGuides: IntegrationGuide[] = [
     ],
     faqs: [
       {
-        question: "Can I start with chatEndpoint and add actions later?",
+        question:
+          "Can I use better-cmdk chat without creating my own endpoint first?",
+        answer:
+          "Yes. better-cmdk includes a free hosted trial endpoint so you can start without signup, but it is rate-limited to 10 requests per 10 minutes. For production, set your own chatEndpoint or use modifywithai for agentic capabilities.",
+      },
+      {
+        question: "Can I start with the default chat and add actions later?",
         answer:
           "Yes. Many teams begin with chat only, then add structured actions and approval rules incrementally.",
       },
@@ -219,4 +225,3 @@ export const integrationGuides: IntegrationGuide[] = [
 export function getIntegrationGuide(slug: string): IntegrationGuide | undefined {
   return integrationGuides.find((guide) => guide.slug === slug);
 }
-

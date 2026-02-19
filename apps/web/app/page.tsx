@@ -1,6 +1,6 @@
 "use client";
 
-import { type CommandDefinition, CommandMenu } from "better-cmdk";
+import { type CommandAction, CommandMenu } from "better-cmdk";
 import {
   ArrowUpRight,
   BookOpen,
@@ -36,9 +36,9 @@ const flowSteps = [
   },
   {
     number: "02",
-    title: "Attach any chat backend",
+    title: "Use hosted chat by default",
     description:
-      "Connect modifywithai.com, Vercel AI SDK, or your own endpoint through the ExternalChat interface.",
+      "better-cmdk includes a free hosted trial chat endpoint with no signup (10 requests per 10 minutes). Use your own chat URL for production or modifywithai for agentic flows.",
   },
   {
     number: "03",
@@ -59,12 +59,14 @@ const tickerItems = [
   { id: "a-define", text: "Define actions once" },
   { id: "a-search", text: "Search commands instantly" },
   { id: "a-ai", text: "AI can call the same actions" },
+  { id: "a-free-chat", text: "Trial chat: 10 req / 10 min" },
   { id: "a-approve", text: "Require approval for sensitive actions" },
   { id: "a-provider", text: "Use any ExternalChat provider" },
   { id: "a-ship", text: "No custom command plumbing" },
   { id: "b-define", text: "Define actions once" },
   { id: "b-search", text: "Search commands instantly" },
   { id: "b-ai", text: "AI can call the same actions" },
+  { id: "b-free-chat", text: "Trial chat: 10 req / 10 min" },
   { id: "b-approve", text: "Require approval for sensitive actions" },
   { id: "b-provider", text: "Use any ExternalChat provider" },
   { id: "b-ship", text: "No custom command plumbing" },
@@ -248,27 +250,30 @@ Do NOT assume answers to any questions.`;
     return () => document.removeEventListener("keydown", onEscape);
   }, [showSetupModal]);
 
-  const commands: CommandDefinition[] = [
+  const actions: CommandAction[] = [
     {
       name: "open-demo",
       label: "Open command palette",
+      description: "Open the command palette modal",
       group: "Actions",
       icon: <Search className="size-4" />,
-      onSelect: () => setOpen(true),
+      execute: () => setOpen(true),
     },
     {
       name: "toggle-theme",
       label: "Toggle theme",
+      description: "Switch between light and dark themes",
       group: "Actions",
       icon: <Moon className="size-4" />,
-      onSelect: toggleTheme,
+      execute: toggleTheme,
     },
     {
       name: "copy-ai-prompt",
       label: "Copy AI setup prompt",
+      description: "Copy the integration prompt for your coding agent",
       group: "Actions",
       icon: <Clipboard className="size-4" />,
-      onSelect: () => {
+      execute: () => {
         copyAISetupPrompt();
         setOpen(false);
       },
@@ -276,52 +281,59 @@ Do NOT assume answers to any questions.`;
     {
       name: "how-it-works",
       label: "Jump to flow",
+      description: "Scroll to the minimal flow section",
       group: "Navigate",
       icon: <Hash className="size-4" />,
-      onSelect: () => scrollTo(howItWorksRef),
+      execute: () => scrollTo(howItWorksRef),
     },
     {
       name: "setup-options",
       label: "Jump to setup options",
+      description: "Scroll to setup options section",
       group: "Navigate",
       icon: <Hash className="size-4" />,
-      onSelect: () => scrollTo(setupRef),
+      execute: () => scrollTo(setupRef),
     },
     {
       name: "providers",
       label: "Jump to provider section",
+      description: "Scroll to provider integrations section",
       group: "Navigate",
       icon: <Plug className="size-4" />,
-      onSelect: () => scrollTo(extensibilityRef),
+      execute: () => scrollTo(extensibilityRef),
     },
     {
       name: "code",
       label: "Jump to code example",
+      description: "Scroll to code example section",
       group: "Navigate",
       icon: <Code className="size-4" />,
-      onSelect: () => scrollTo(codeRef),
+      execute: () => scrollTo(codeRef),
     },
     {
       name: "docs",
       label: "Open docs",
+      description: "Open better-cmdk documentation in a new tab",
       group: "Links",
       icon: <ArrowUpRight className="size-4" />,
-      onSelect: () => openExternal("https://better-cmdk.com/docs"),
+      execute: () => openExternal("https://better-cmdk.com/docs"),
     },
     {
       name: "github",
       label: "GitHub",
+      description: "Open the better-cmdk GitHub repository",
       group: "Links",
       icon: <Github className="size-4" />,
-      onSelect: () =>
+      execute: () =>
         openExternal("https://github.com/ModifyWithAI/better-cmdk"),
     },
     {
       name: "modifywithai",
       label: "modifywithai.com",
+      description: "Open modifywithai.com in a new tab",
       group: "Links",
       icon: <Plug className="size-4" />,
-      onSelect: () => openExternal("https://modifywithai.com"),
+      execute: () => openExternal("https://modifywithai.com"),
     },
   ];
 
@@ -329,18 +341,20 @@ Do NOT assume answers to any questions.`;
   {
     name: "setView",
     label: "Change dashboard view",
-    options: { view: { type: "string", required: true } },
+    description: "Switch dashboard to a specific view",
+    inputSchema: { view: { type: "string", required: true } },
     execute: ({ view }) => setView(view),
   },
   {
     name: "toggleTheme",
     label: "Toggle theme",
+    description: "Switch between light and dark mode",
     execute: () =>
       setTheme((theme) => (theme === "dark" ? "light" : "dark")),
   },
 ];
 
-<CommandMenu commands={actions} />`;
+<CommandMenu actions={actions} />`;
 
   return (
     <div className="relative min-h-screen overflow-x-clip pb-10">
@@ -444,8 +458,9 @@ Do NOT assume answers to any questions.`;
             style={{ animationDelay: "220ms" }}
           >
             better-cmdk combines fuzzy search, AI chat, and action approvals in
-            one open-source menu. Define actions once, then reuse them in
-            command mode and AI mode.
+            one open-source menu. Hosted AI chat is included as a free trial
+            endpoint (10 requests per 10 minutes), and you can bring your own
+            provider for production.
           </p>
 
           <div
@@ -481,6 +496,52 @@ Do NOT assume answers to any questions.`;
               {tickerItems.map((item) => (
                 <span key={item.id}>{item.text}</span>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-5 py-16">
+          <div className="border-4 border-foreground bg-secondary p-8 sm:p-10">
+            <p className="inline-flex border-2 border-foreground bg-card px-3 py-1 font-mono text-[11px] uppercase tracking-[0.16em]">
+              Recommended Together
+            </p>
+            <h2 className="font-display mt-4 text-balance text-[clamp(2.4rem,8vw,5.8rem)] leading-[0.84] uppercase">
+              better-cmdk + ModifyWithAI
+            </h2>
+            <p className="mt-4 max-w-3xl text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
+              Use better-cmdk for command UX and ModifyWithAI for execution.
+            </p>
+
+            <div className="mt-8 grid gap-5 lg:grid-cols-2 lg:items-stretch">
+              <a
+                href="https://better-cmdk.com/docs"
+                className="group flex min-h-[14rem] flex-col border-4 border-foreground bg-card p-5 sm:p-6 transition-transform hover:-translate-y-1"
+              >
+                <span className="inline-flex w-fit self-start border-2 border-foreground px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em]">
+                  better-cmdk
+                </span>
+                <h3 className="font-display mt-4 text-balance text-[clamp(2rem,5vw,3.2rem)] leading-[0.88] uppercase">
+                  Command UI
+                </h3>
+                <p className="mt-3 text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
+                  Search and launch commands quickly.
+                </p>
+              </a>
+
+              <a
+                href="https://modifywithai.com"
+                className="group flex min-h-[14rem] flex-col border-4 border-foreground bg-background p-5 sm:p-6 transition-transform hover:-translate-y-1"
+              >
+                <span className="inline-flex w-fit self-start border-2 border-foreground px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em]">
+                  ModifyWithAI
+                </span>
+                <h3 className="font-display mt-4 text-balance text-[clamp(2rem,5vw,3.2rem)] leading-[0.88] uppercase">
+                  Agent Runtime
+                </h3>
+                <p className="mt-3 text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
+                  Run actions, collect required inputs, and handle approvals.
+                </p>
+              </a>
             </div>
           </div>
         </section>
@@ -529,9 +590,9 @@ Do NOT assume answers to any questions.`;
                 <span className="block">Same Commands.</span>
               </h2>
               <p className="mt-4 max-w-xl text-balance font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-background/92">
-                Pass an ExternalChat provider object or set a chat endpoint.
-                better-cmdk handles mode switching, streaming responses, and
-                action approval prompts.
+                Hosted chat works by default as a trial service with no signup
+                (10 requests per 10 minutes). For production, set a custom chat
+                endpoint or use modifywithai for agentic capabilities.
               </p>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -721,7 +782,7 @@ Do NOT assume answers to any questions.`;
               </a>
               <a
                 href="https://modifywithai.com"
-                className="inline-flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors hover:bg-background hover:text-foreground sm:px-5 sm:py-4"
+                className="inline-flex items-center justify-between border-2 border-background bg-background px-4 py-3 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors hover:border-foreground hover:bg-background/90 sm:px-5 sm:py-4"
               >
                 modifywithai.com
                 <ArrowUpRight className="size-4" />
@@ -738,9 +799,8 @@ Do NOT assume answers to any questions.`;
       <CommandMenu
         open={open}
         onOpenChange={setOpen}
-        chatEndpoint="/api/chat"
-        commands={commands}
-        commandsPlaceholder="Search commands or ask AI..."
+        actions={actions}
+        actionsPlaceholder="Search actions or ask AI..."
         corners="none"
         borderColor="hsl(var(--foreground))"
         className="!bg-card !shadow-none"

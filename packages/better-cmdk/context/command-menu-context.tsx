@@ -26,7 +26,7 @@ export interface ExternalChat {
         id: string
         approved: boolean
     }) => void
-    agenticActions?: readonly CommandAction[]
+    actions?: readonly CommandAction[]
 }
 
 export interface CommandMenuContextValue {
@@ -48,7 +48,7 @@ export interface CommandMenuContextValue {
         id: string
         approved: boolean
     }) => void
-    agenticActions?: readonly CommandAction[]
+    actions?: readonly CommandAction[]
     requestClose?: () => void
     // Chat history
     conversations: ChatConversation[]
@@ -72,10 +72,11 @@ export interface CommandMenuProviderProps {
 }
 
 const emptyMessages: UIMessage[] = []
+export const DEFAULT_CHAT_ENDPOINT = "https://better-cmdk.com/api/chat"
 
 export function CommandMenuProvider({
     children,
-    chatEndpoint = null,
+    chatEndpoint = DEFAULT_CHAT_ENDPOINT,
     chat: externalChat,
     onModeChange,
     onOpenChange,
@@ -209,7 +210,7 @@ export function CommandMenuProvider({
         externalChat?.setMessages ?? internalChat.setMessages
 
     const addToolApprovalResponse = externalChat?.addToolApprovalResponse
-    const agenticActions = externalChat?.agenticActions
+    const actions = externalChat?.actions
 
     // Chat history
     const chatHistory = useChatHistory({
@@ -263,7 +264,7 @@ export function CommandMenuProvider({
             isLoading,
             isEnabled,
             addToolApprovalResponse,
-            agenticActions,
+            actions,
             requestClose,
             conversations: chatHistory.conversations,
             currentConversationId: chatHistory.currentConversationId,
@@ -284,7 +285,7 @@ export function CommandMenuProvider({
             isLoading,
             isEnabled,
             addToolApprovalResponse,
-            agenticActions,
+            actions,
             requestClose,
             chatHistory.conversations,
             chatHistory.currentConversationId,

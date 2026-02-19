@@ -44,7 +44,9 @@ export default function IntegrationsIndexPage() {
         <p className="mt-5 max-w-3xl font-mono text-sm leading-relaxed uppercase tracking-[0.08em] text-foreground/92">
           These pages cover concrete setup paths for better-cmdk with popular
           provider architectures. Each guide explains when to choose that path,
-          what to configure, and what to validate before production.
+          what to configure, and what to validate before production. For
+          zero-setup development, better-cmdk also includes a free hosted trial
+          endpoint (no signup, 10 requests per 10 minutes).
         </p>
       </section>
 

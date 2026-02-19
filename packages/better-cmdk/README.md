@@ -52,45 +52,49 @@ Styles are isolated under `.bcmdk-root`. Override only the command menu tokens:
 
 ## Usage
 
-The recommended way to use better-cmdk is with the declarative `commands` prop. Define your commands as data and let the component handle rendering, grouping, and search.
+The recommended way to use better-cmdk is with the declarative `actions` prop.
 
 ```tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { CalendarIcon, SearchIcon, UserIcon, SettingsIcon } from "lucide-react";
-import { CommandMenu, type CommandDefinition } from "better-cmdk";
+import { CommandMenu, type CommandAction } from "better-cmdk";
 
-const commands: CommandDefinition[] = [
+const actions: CommandAction[] = [
   {
     name: "calendar",
     label: "Calendar",
+    description: "Open calendar view",
     icon: <CalendarIcon className="size-4" />,
     group: "Suggestions",
-    onSelect: () => console.log("Calendar selected"),
+    execute: () => console.log("Calendar selected"),
   },
   {
     name: "search",
     label: "Search",
+    description: "Open search view",
     icon: <SearchIcon className="size-4" />,
     group: "Suggestions",
-    onSelect: () => console.log("Search selected"),
+    execute: () => console.log("Search selected"),
   },
   {
     name: "profile",
     label: "Profile",
+    description: "Open profile settings",
     icon: <UserIcon className="size-4" />,
     group: "Settings",
     shortcut: "⌘P",
-    onSelect: () => console.log("Profile selected"),
+    execute: () => console.log("Profile selected"),
   },
   {
     name: "settings",
     label: "Settings",
+    description: "Open settings page",
     icon: <SettingsIcon className="size-4" />,
     group: "Settings",
     shortcut: "⌘S",
-    onSelect: () => console.log("Settings selected"),
+    execute: () => console.log("Settings selected"),
   },
 ];
 
@@ -113,40 +117,50 @@ export function CommandPalette() {
     <CommandMenu
       open={open}
       onOpenChange={setOpen}
-      commands={commands}
-      commandsPlaceholder="Search or ask AI..."
+      actions={actions}
+      actionsPlaceholder="Search or ask AI..."
     />
   );
 }
 ```
 
-### CommandDefinition
+### CommandAction
 
-Each command in the `commands` array supports:
+Each action in the `actions` array supports:
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `name` | `string` | **Required.** Unique key used for search matching |
 | `label` | `string` | Display text (falls back to `name`) |
-| `group` | `string` | Group heading — commands with the same group appear together |
+| `description` | `string` | **Required.** Action description used by AI/tooling |
+| `group` | `string` | Group heading — actions with the same group appear together |
 | `icon` | `ReactNode` | Icon rendered before the label |
 | `shortcut` | `string` | Keyboard shortcut hint (right-aligned) |
 | `keywords` | `string[]` | Extra search terms |
+| `semanticKey` | `string` | Optional operation identity for overlap detection |
+| `inputSchema` | `Record<string, { type; description?; required? }>` | Optional argument schema for AI-routed actions |
+| `approvalRequired` | `boolean` | Optional approval flag (used by external providers) |
 | `disabled` | `boolean` | Grayed out, not selectable |
-| `onSelect` | `() => void` | Called when the command is selected |
+| `execute` | `(options: Record<string, unknown>) => void` | **Required.** Execution handler |
+| `onSelect` | `() => void` | Optional direct-selection override (ignored by modifywithai) |
+
+When sharing one action array across libraries, each library ignores fields it does not use.
+better-cmdk is command-focused and should primarily define no-argument actions (no `inputSchema`).
+If modifywithai is also used, keep argument-requiring actions (`inputSchema`) in the same shared array.
+If a shared standard `actions` array already exists, extend it in place instead of creating a second list.
 
 ### CommandMenu Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `commands` | `CommandDefinition[]` | — | Declarative command definitions |
-| `commandsPlaceholder` | `string` | `"Search or ask AI..."` | Input placeholder |
-| `commandsAskAILabel` | `string` | `"Ask AI"` | Label for the AI trigger |
+| `actions` | `readonly CommandAction[]` | — | Declarative action definitions |
+| `actionsPlaceholder` | `string` | `"Search or ask AI..."` | Input placeholder |
+| `actionsAskAILabel` | `string` | `"Ask AI"` | Label for the AI trigger |
 | `open` | `boolean` | — | Controlled open state |
 | `onOpenChange` | `(open: boolean) => void` | — | Open state callback |
 | `corners` | `"none" \| "sm" \| "md" \| "lg" \| "xl"` | `"xl"` | Border radius |
 | `borderColor` | `string` | — | Custom ring color |
-| `chatEndpoint` | `string` | — | API endpoint for built-in AI chat |
+| `chatEndpoint` | `string \| null` | `"https://better-cmdk.com/api/chat"` | Built-in AI chat endpoint. Default is a developer trial service (10 requests per 10 minutes); set your own URL for production or `null` to disable. |
 | `chat` | `ExternalChat` | — | External chat integration |
 | `onModeChange` | `(mode: CommandMenuMode) => void` | — | Fires when switching between command/chat |
 | `historyStorageKey` | `string` | — | localStorage key for chat history |
@@ -166,7 +180,7 @@ Each command in the `commands` array supports:
 <CommandMenu
   open={open}
   onOpenChange={setOpen}
-  commands={commands}
+  actions={actions}
   mobile={{
     enabled: true,
     layout: "keyboard-last",
@@ -182,12 +196,17 @@ Each command in the `commands` array supports:
 
 ### AI Chat
 
-Enable the built-in AI chat by providing either a `chatEndpoint` or an external `chat` object:
+By default, `CommandMenu` uses `https://better-cmdk.com/api/chat` as a developer trial service. It is free, requires no signup, and is rate-limited to 10 requests per 10 minutes.
+
+For production, set `chatEndpoint` to your own chat URL, or pass an external `chat` object (for example via modifywithai when you need agentic action execution). You can disable built-in chat with `chatEndpoint={null}`.
 
 ```tsx
-// Built-in chat with an API endpoint
+// Hosted developer-trial chat (default)
+<CommandMenu actions={actions} open={open} onOpenChange={setOpen} />
+
+// Custom built-in chat endpoint
 <CommandMenu
-  commands={commands}
+  actions={actions}
   chatEndpoint="/api/chat"
   open={open}
   onOpenChange={setOpen}
@@ -195,7 +214,7 @@ Enable the built-in AI chat by providing either a `chatEndpoint` or an external 
 
 // External chat integration (e.g. Vercel AI SDK useChat)
 <CommandMenu
-  commands={commands}
+  actions={actions}
   chat={externalChat}
   open={open}
   onOpenChange={setOpen}
@@ -210,9 +229,9 @@ When you connect an external chat provider like [modifywithai](https://modifywit
 
 ## Advanced: Custom Children
 
-For full control over the command list rendering, you can pass children instead of `commands`. This approach is compatible with shadcn/ui patterns if you're migrating from an existing setup.
+For full control over the command list rendering, you can pass children instead of `actions`. This approach is compatible with shadcn/ui patterns if you're migrating from an existing setup.
 
-> **Note:** When both `commands` and `children` are provided, `commands` takes precedence.
+> **Note:** When both `actions` and `children` are provided, `actions` takes precedence.
 
 ```tsx
 "use client";

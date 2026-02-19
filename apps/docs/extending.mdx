@@ -1,392 +1,222 @@
 ---
 title: "Extending"
-description: "Define commands, customize theming, and build advanced integrations"
+description: "Design robust actions and customize better-cmdk integrations"
 ---
 
-## Defining commands
+## Action design rules
 
-Most apps need commands in the palette — navigate to a page, toggle a setting, open a modal. Define them as `CommandDefinition[]` and pass them to `CommandMenu`:
+Use these rules to keep behavior predictable across `better-cmdk` and `modifywithai`.
 
-```tsx
-import { CommandMenu, type CommandDefinition } from "better-cmdk";
-import { LayoutDashboardIcon, SettingsIcon, SunMoonIcon } from "lucide-react";
+1. Define one canonical `actions: CommandAction[]` array.
+2. Use one action per underlying operation (no duplicates).
+3. Write specific `description` text so AI routing is reliable.
+4. Add `inputSchema` only when the action needs arguments.
+5. Mark sensitive operations with `approvalRequired: true`.
 
-const commands: CommandDefinition[] = [
-  {
-    name: "dashboard",
-    label: "Go to Dashboard",
-    group: "Navigation",
-    icon: <LayoutDashboardIcon className="size-4" />,
-    shortcut: "⌘D",
-    onSelect: () => router.push("/dashboard"),
-  },
-  {
-    name: "settings",
-    label: "Settings",
-    group: "Navigation",
-    icon: <SettingsIcon className="size-4" />,
-    shortcut: "⌘,",
-    onSelect: () => router.push("/settings"),
-  },
-  {
-    name: "dark-mode",
-    label: "Toggle dark mode",
-    group: "Appearance",
-    icon: <SunMoonIcon className="size-4" />,
-    onSelect: () => document.documentElement.classList.toggle("dark"),
-  },
-];
+If a field is irrelevant to one library, that library ignores it.
 
-<CommandMenu open={open} onOpenChange={setOpen} commands={commands} chatEndpoint="/api/chat" />
-```
+By default, `CommandMenu` uses `https://better-cmdk.com/api/chat` as a free developer trial endpoint (no signup, 10 requests per 10 minutes). For production, set your own `chatEndpoint` or use `modifywithai` for agentic capabilities. You can disable chat with `chatEndpoint={null}`.
 
-Commands with the same `group` string appear together under that heading. Ungrouped commands appear first.
+## CommandAction reference
 
-### Good command definitions
+| Field | Type | Required | Used by |
+|-------|------|----------|---------|
+| `name` | `string` | Yes | both |
+| `description` | `string` | Yes | both |
+| `execute` | `(options: Record<string, unknown>) => void` | Yes | both |
+| `label` | `string` | No | better-cmdk |
+| `group` | `string` | No | better-cmdk |
+| `icon` | `ReactNode` | No | better-cmdk |
+| `shortcut` | `string` | No | better-cmdk |
+| `keywords` | `string[]` | No | better-cmdk |
+| `semanticKey` | `string` | No | both (overlap identity) |
+| `disabled` | `boolean` | No | better-cmdk |
+| `onSelect` | `() => void` | No | better-cmdk |
+| `inputSchema` | `Record<string, { type; description?; required? }>` | No | both |
+| `approvalRequired` | `boolean` | No | agent providers |
 
-Include a `label`, `group`, and `icon` for every command. The `label` is what users search for. The `group` organizes the palette. The `icon` makes commands scannable.
+## Quality examples
 
 <Tabs>
   <Tab title="Good">
     ```tsx
     {
-      name: "settings",
-      label: "Settings",
-      group: "Navigation",
-      icon: <SettingsIcon className="size-4" />,
-      shortcut: "⌘,",
-      onSelect: () => router.push("/settings"),
+      name: "archive-project",
+      label: "Archive project",
+      description:
+        "Move a project to the archive list. The project can be restored later.",
+      group: "Projects",
+      approvalRequired: true,
+      execute: ({ projectId }) => archiveProject(String(projectId)),
+      inputSchema: {
+        projectId: {
+          type: "string",
+          description: "ID of the project to archive",
+          required: true,
+        },
+      },
     }
     ```
   </Tab>
   <Tab title="Bad">
     ```tsx
     {
-      name: "settings",
-      onSelect: () => router.push("/settings"),
-      // No label — displays raw name "settings"
-      // No group — floats outside any heading
-      // No icon — harder to scan visually
+      name: "archive",
+      description: "Archive project",
+      execute: () => {},
+      // Too vague for AI routing.
+      // Missing schema for required arguments.
+      // No approval guard for a potentially destructive action.
     }
     ```
   </Tab>
 </Tabs>
 
-### The CommandDefinition interface
+## Command-like vs argument-requiring
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `string` | Unique key (used as cmdk value for search matching) |
-| `label` | `string?` | Display text (falls back to `name`) |
-| `group` | `string?` | Group heading — commands with the same group appear together |
-| `icon` | `ReactNode?` | Icon rendered before the label |
-| `shortcut` | `string?` | Keyboard shortcut hint (right-aligned) |
-| `keywords` | `string[]?` | Extra search terms beyond the label |
-| `disabled` | `boolean?` | Grayed out, not selectable |
-| `onSelect` | `() => void` | Called when the command is selected |
+| Action kind | Definition | Direct select behavior |
+|-------------|------------|------------------------|
+| Command-like | No `inputSchema` | Calls `onSelect` or `execute({})` |
+| Argument-requiring | Has `inputSchema` | Routed into chat so arguments can be gathered |
 
-## Actions (for AI providers)
+Do not create both forms for the same operation.
 
-When you connect an AI platform like [modifywithai.com](https://modifywithai.com), the platform can invoke **actions** on behalf of the user. Actions are the operations the AI agent can perform — with typed parameters and optional approval gates.
+## Shared-array integration with modifywithai
 
-You define actions through your provider's SDK (e.g. `ActionDefinition` from modifywithai), not through better-cmdk directly. The provider passes them to `CommandMenu` via the `ExternalChat.agenticActions` field, where they also appear as searchable items in the palette.
-
-<Tip>
-  For details on defining actions, see the [modifywithai actions guide](https://modifywithai.com/docs/concepts/actions). The modifywithai agent uses action descriptions to decide when to invoke them — specific descriptions produce better results.
-</Tip>
-
-### The CommandAction interface
-
-This is the provider-facing contract that better-cmdk expects. Providers like modifywithai map their types to this interface automatically.
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `name` | `string` | Unique action identifier |
-| `label` | `string?` | Display label (falls back to `name`) |
-| `options` | `Record<string, CommandActionOption>?` | Parameters the action accepts |
-| `execute` | `(options: Record<string, unknown>) => void` | Callback when the action runs |
-
-## Commands vs actions
-
-| | Commands | Actions |
-|---|---|---|
-| **Who defines them** | You (the app developer) | Your AI provider (e.g. modifywithai) |
-| **Type** | `CommandDefinition` | `CommandAction` (provider interface) |
-| **Passed via** | `CommandMenu commands={...}` | `ExternalChat.agenticActions` (through provider) |
-| **UI** | Icons, shortcuts, groups, keywords, disabled state | Label only |
-| **On select** | Runs `onSelect()` immediately | Starts a chat, AI invokes with parameters |
-| **AI-aware** | No — palette UI only | Yes — the AI agent can invoke them |
-
-<Tip>
-  Use **commands** for everything users do directly (navigate, toggle, open). **Actions** come through your AI provider — see the [modifywithai docs](https://modifywithai.com/docs/concepts/actions) for how to define them.
-</Tip>
-
-## Render function pattern (shadcn/cmdk compatible)
-
-For full control over rendering, pass a render function as `children` instead of the `commands` prop. This is the shadcn/cmdk-compatible pattern.
+Reuse the same `actions` list in both libraries:
 
 ```tsx
-<CommandMenu open={open} onOpenChange={setOpen} chatEndpoint="/api/chat">
-  {({ mode, messages, status, isEnabled }) => (
+import { CommandMenu, type CommandAction } from "better-cmdk";
+import { useAssistant } from "modifywithai";
+
+const actions: CommandAction[] = [
+  {
+    name: "toggle-dark-mode",
+    label: "Toggle dark mode",
+    description: "Toggle between light and dark theme",
+    group: "Appearance",
+    execute: () => document.documentElement.classList.toggle("dark"),
+  },
+  {
+    name: "navigate-to",
+    label: "Navigate to page",
+    description: "Navigate to a specific path in the app",
+    inputSchema: {
+      path: { type: "string", description: "Destination path", required: true },
+    },
+    execute: ({ path }) => router.push(String(path)),
+  },
+];
+
+const assistant = useAssistant({
+  tokenEndpoint: "/api/mwai/token",
+  actions,
+});
+
+<CommandMenu open={open} onOpenChange={setOpen} actions={actions} chat={assistant} />;
+```
+
+## Custom rendering (composition API)
+
+Use `children` for full UI control:
+
+```tsx
+import {
+  CommandMenu,
+  CommandInput,
+  CommandList,
+  CommandGroup,
+  CommandItem,
+  CommandEmpty,
+  CommandShortcut,
+} from "better-cmdk";
+
+<CommandMenu open={open} onOpenChange={setOpen}>
+  {({ mode }) => (
     <>
-      <CommandMenuInput placeholder="Search or ask AI..." showSendButton />
-      <CommandMenuList>
-        <CommandMenuEmpty />
-        {mode === "command" && (
-          <CommandGroup heading="Navigation">
-            <CommandItem onSelect={() => router.push("/dashboard")}>
-              Dashboard
-            </CommandItem>
-            <CommandItem onSelect={() => router.push("/settings")}>
-              Settings
-            </CommandItem>
-          </CommandGroup>
-        )}
-      </CommandMenuList>
+      <CommandInput
+        placeholder={mode === "chat" ? "Ask AI..." : "Search actions..."}
+        showSendButton
+      />
+      <CommandList>
+        <CommandGroup heading="Navigation">
+          <CommandItem onSelect={() => router.push("/dashboard")}>
+            Go to Dashboard
+            <CommandShortcut>⌘D</CommandShortcut>
+          </CommandItem>
+        </CommandGroup>
+        <CommandEmpty />
+      </CommandList>
     </>
   )}
 </CommandMenu>
 ```
 
-The render function receives:
+When `actions` and `children` are both provided, `actions` takes precedence.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `mode` | `"command" \| "chat"` | Current mode |
-| `messages` | `UIMessage[]` | Chat message history |
-| `status` | `"idle" \| "submitted" \| "streaming" \| "error"` | Chat status |
-| `isEnabled` | `boolean` | Whether AI chat is configured |
+## Approval workflow
 
-## Tool approval workflow
+For external agents, `approvalRequired` actions can be gated by user confirmation.
 
-Some actions shouldn't run without confirmation. Deleting data or sending emails should require the user to approve first. better-cmdk handles this with the `Confirmation` component family.
+Flow:
 
-The flow:
-
-1. The AI sends a `tool-performActions` message part listing the actions it wants to run
-2. `AssistantMessages` renders a `Confirmation` dialog showing the actions
-3. The user clicks **Approve** or **Deny**
-4. `addToolApprovalResponse({ id, approved: true/false })` sends the decision back to the AI
-
-This happens automatically when you use `AssistantMessages` (which `CommandMenuList` uses internally in chat mode). If you're building a custom chat UI, compose the confirmation components yourself:
+1. Agent requests execution of one or more actions.
+2. UI asks the user to approve or deny.
+3. Your app sends the decision with `addToolApprovalResponse`.
 
 ```tsx
-import {
-  Confirmation,
-  ConfirmationTitle,
-  ConfirmationRequest,
-  ConfirmationAccepted,
-  ConfirmationRejected,
-  ConfirmationActions,
-  ConfirmationAction,
-} from "better-cmdk";
+const { addToolApprovalResponse } = useCommandMenuContext();
 
-<Confirmation state={toolState} approval={approval}>
-  <ConfirmationTitle>Confirm action</ConfirmationTitle>
+function approve(id: string) {
+  addToolApprovalResponse?.({ id, approved: true });
+}
 
-  <ConfirmationRequest>
-    {/* Shown while waiting for user decision */}
-    <p>The AI wants to update your theme to dark mode.</p>
-  </ConfirmationRequest>
-
-  <ConfirmationAccepted>
-    <p>Action approved</p>
-  </ConfirmationAccepted>
-
-  <ConfirmationRejected>
-    <p>Action cancelled</p>
-  </ConfirmationRejected>
-
-  <ConfirmationActions>
-    <ConfirmationAction variant="outline" onClick={() => deny(approval.id)}>
-      Deny
-    </ConfirmationAction>
-    <ConfirmationAction onClick={() => approve(approval.id)}>
-      Approve
-    </ConfirmationAction>
-  </ConfirmationActions>
-</Confirmation>
-```
-
-The `Confirmation` component renders conditionally based on state — amber during `approval-requested`, green when approved, red when rejected.
-
-## Context and hooks
-
-Access command menu state from anywhere in your component tree. Useful when you need to trigger the palette programmatically or read the current mode.
-
-```tsx
-import { CommandMenuProvider, useCommandMenuContext } from "better-cmdk";
-
-function MyCustomInput() {
-  const {
-    mode,           // "command" | "chat"
-    inputValue,     // Current input text
-    setInputValue,  // Update input
-    switchToChat,   // Switch to chat mode (optional initial query)
-    switchToCommand, // Switch back to command mode
-    sendMessage,    // Send a chat message
-    messages,       // Chat history
-    status,         // "idle" | "submitted" | "streaming" | "error"
-    isLoading,      // true when submitted or streaming
-    isEnabled,      // true when chat is configured
-  } = useCommandMenuContext();
-
-  return <input value={inputValue} onChange={(e) => setInputValue(e.target.value)} />;
+function deny(id: string) {
+  addToolApprovalResponse?.({ id, approved: false });
 }
 ```
 
-The provider is set up automatically by `CommandMenu`. If you need to use the context outside of `CommandMenu`, wrap your tree with `CommandMenuProvider`:
+`AssistantMessages` renders built-in confirmation UI for standard chat mode. Use custom confirmation components only when you need custom presentation.
+
+## Context and history hooks
+
+`useCommandMenuContext()` exposes runtime state (`mode`, `messages`, `status`, `sendMessage`, `switchToChat`, `switchToCommand`).
+
+Use `historyStorageKey` and `maxConversations` on `CommandMenu` to control persisted chat history:
 
 ```tsx
-<CommandMenuProvider chatEndpoint="/api/chat" onModeChange={(mode) => console.log(mode)}>
-  <MyCustomInput />
-  <MyCustomList />
-</CommandMenuProvider>
+<CommandMenu
+  open={open}
+  onOpenChange={setOpen}
+  actions={actions}
+  historyStorageKey="my-app-command-history"
+  maxConversations={20}
+/>
 ```
-
-### Provider props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `chatEndpoint` | `string?` | API endpoint for internal Vercel AI SDK chat |
-| `chat` | `ExternalChat?` | External chat provider (overrides `chatEndpoint`) |
-| `onModeChange` | `(mode: CommandMenuMode) => void` | Called when mode switches |
-| `onOpenChange` | `(open: boolean) => void` | Called when the menu opens/closes |
 
 ## Theming and styling
 
-### CSS variables
-
-better-cmdk uses namespaced CSS variables. Override them to match your brand:
+Customize tokens on `.bcmdk-root`:
 
 ```css
 .bcmdk-root {
-  --bcmdk-primary: 0.205 0 0;             /* Button and accent color */
-  --bcmdk-primary-foreground: 0.985 0 0;  /* Text on primary */
-  --bcmdk-popover: 1 0 0;                 /* Palette background */
-  --bcmdk-muted: 0.97 0 0;                /* Subtle backgrounds */
-  --bcmdk-border: 0.922 0 0;              /* Border color */
-  --bcmdk-radius: 0.625rem;               /* Corner radius */
+  --bcmdk-primary: 0.205 0 0;
+  --bcmdk-primary-foreground: 0.985 0 0;
+  --bcmdk-muted: 0.97 0 0;
+  --bcmdk-border: 0.922 0 0;
+  --bcmdk-radius: 0.625rem;
 }
 ```
 
-For dark mode, redefine these variables under `.dark .bcmdk-root`.
-
-### className props
-
-Every component accepts a `className` prop for one-off overrides:
-
-```tsx
-<CommandMenuInput className="text-lg" placeholder="Search..." />
-```
-
-### cn() utility
-
-Use the `cn()` utility to merge Tailwind classes safely:
-
-```tsx
-import { cn } from "better-cmdk";
-
-<div className={cn("p-4", isActive && "bg-primary text-primary-foreground")} />
-```
-
-## Component reference
-
-<Accordion title="Command palette">
-  | Component | Description |
-  |-----------|-------------|
-  | `Command` | Root command primitive |
-  | `CommandDialog` | Modal command palette |
-  | `CommandInput` | Search input with icon |
-  | `CommandList` | Scrollable results container |
-  | `CommandEmpty` | "No results" state |
-  | `CommandGroup` | Groups commands with a heading |
-  | `CommandItem` | Selectable command row |
-  | `CommandShortcut` | Keyboard shortcut hint |
-  | `CommandSeparator` | Visual divider |
-</Accordion>
-
-<Accordion title="Command menu (AI-enabled)">
-  | Component | Description |
-  |-----------|-------------|
-  | `CommandMenu` | Dual-mode command + chat palette |
-  | `CommandMenuInput` | Input with mode-aware icon and send button |
-  | `CommandMenuList` | List that switches between commands and chat |
-  | `CommandMenuEmpty` | "Ask AI" fallback when no commands match |
-  | `CommandMenuContent` | Dialog content wrapper |
-</Accordion>
-
-<Accordion title="Chat">
-  | Component | Description |
-  |-----------|-------------|
-  | `ChatMessageList` | Auto-scrolling message container |
-  | `ChatLoading` | Streaming indicator |
-  | `ChatEmpty` | Empty chat state |
-</Accordion>
-
-<Accordion title="Messages">
-  | Component | Description |
-  |-----------|-------------|
-  | `Message` | Message wrapper (user or assistant) |
-  | `MessageContent` | Message body |
-  | `MessageResponse` | Markdown-rendered response (uses Streamdown) |
-  | `AssistantMessages` | Full message thread with tool/form handling |
-</Accordion>
-
-<Accordion title="Confirmation">
-  | Component | Description |
-  |-----------|-------------|
-  | `Confirmation` | Root wrapper — renders based on approval state |
-  | `ConfirmationTitle` | Heading text |
-  | `ConfirmationRequest` | Shown during approval request |
-  | `ConfirmationAccepted` | Shown when approved |
-  | `ConfirmationRejected` | Shown when rejected |
-  | `ConfirmationActions` | Button container |
-  | `ConfirmationAction` | Approve/deny button |
-</Accordion>
-
-<Accordion title="Task">
-  | Component | Description |
-  |-----------|-------------|
-  | `Task` | Collapsible task wrapper |
-  | `TaskTrigger` | Header with title and icon |
-  | `TaskContent` | Expandable content area |
-  | `TaskItem` | Individual task line |
-  | `TaskItemFile` | File badge |
-</Accordion>
-
-<Accordion title="Forms">
-  | Component | Description |
-  |-----------|-------------|
-  | `AssistantFormRenderer` | Renders AI-generated forms from JSON UI trees |
-  | `defaultFormRegistry` | Default component registry for form fields |
-</Accordion>
-
-<Accordion title="Utilities">
-  | Export | Description |
-  |--------|-------------|
-  | `Button` | Styled button with variant and size props |
-  | `buttonVariants` | CVA variant definitions |
-  | `cn` | Class name merger (`clsx` + `tailwind-merge`) |
-  | `Dialog` / `DialogContent` / etc. | Radix UI dialog primitives |
-  | `Collapsible` / `CollapsibleTrigger` / `CollapsibleContent` | Radix UI collapsible |
-</Accordion>
-
-<Accordion title="Context and hooks">
-  | Export | Description |
-  |--------|-------------|
-  | `CommandMenuProvider` | Context provider for command menu state |
-  | `CommandMenuContext` | Raw React context |
-  | `useCommandMenuContext` | Hook to access command menu state |
-</Accordion>
+Then use `className` props for local overrides, and `cn()` for conditional classes.
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="modifywithai Integration" icon="plug" href="https://modifywithai.com/docs">
-    Set up the agent platform that powers your AI actions.
+  <Card title="ModifyWithAI concepts" icon="brain" href="https://modifywithai.com/docs/concepts/actions">
+    Deep dive into action routing, context, and approvals.
   </Card>
-  <Card title="GitHub" icon="github" href="https://github.com/nichochar/better-cmdk">
-    View the source, file issues, and contribute.
+  <Card title="GitHub" icon="github" href="https://github.com/ModifyWithAI/better-cmdk">
+    Browse source, open issues, or contribute improvements.
   </Card>
 </CardGroup>

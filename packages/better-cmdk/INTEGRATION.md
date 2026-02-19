@@ -38,45 +38,49 @@ Override any variable to match your brand.
 
 ---
 
-## Quick Start: Declarative Commands
+## Quick Start: Declarative Actions
 
-The simplest way to use better-cmdk. Pass a `commands` array and get grouping, icons, shortcuts, filtering, and AI chat for free.
+The simplest way to use better-cmdk. Pass an `actions` array and get grouping, icons, shortcuts, filtering, and built-in AI chat.
 
 ```tsx
 import { useState } from "react"
-import { CommandMenu, type CommandDefinition } from "better-cmdk"
+import { CommandMenu, type CommandAction } from "better-cmdk"
 import { Settings, User, FileText, Search } from "lucide-react"
 
-const commands: CommandDefinition[] = [
+const actions: CommandAction[] = [
   {
     name: "open-settings",
     label: "Open Settings",
+    description: "Navigate to settings page",
     group: "Navigation",
     icon: <Settings className="size-4" />,
     shortcut: "\u2318,",
-    onSelect: () => console.log("settings"),
+    execute: () => console.log("settings"),
   },
   {
     name: "open-profile",
     label: "Open Profile",
+    description: "Navigate to profile page",
     group: "Navigation",
     icon: <User className="size-4" />,
-    onSelect: () => console.log("profile"),
+    execute: () => console.log("profile"),
   },
   {
     name: "search-docs",
     label: "Search Documentation",
+    description: "Open documentation search",
     group: "Help",
     icon: <Search className="size-4" />,
     keywords: ["help", "faq"],
-    onSelect: () => console.log("docs"),
+    execute: () => console.log("docs"),
   },
   {
     name: "changelog",
     label: "View Changelog",
+    description: "Open changelog view",
     group: "Help",
     icon: <FileText className="size-4" />,
-    onSelect: () => console.log("changelog"),
+    execute: () => console.log("changelog"),
   },
 ]
 
@@ -89,36 +93,47 @@ export function App() {
       <CommandMenu
         open={open}
         onOpenChange={setOpen}
-        commands={commands}
-        chatEndpoint="/api/chat"
+        actions={actions}
       />
     </>
   )
 }
 ```
 
-### CommandDefinition
+`CommandMenu` uses `https://better-cmdk.com/api/chat` by default as a developer trial service (free, no signup, 10 requests per 10 minutes). For production, set your own `chatEndpoint` or use `modifywithai` for agentic capabilities.
+
+### CommandAction
 
 | Field | Type | Description |
 |---|---|---|
 | `name` | `string` | **Required.** Unique key, used as the cmdk value. |
 | `label` | `string` | Display text. Falls back to `name`. |
+| `description` | `string` | **Required.** Action description used by AI/tooling. |
 | `group` | `string` | Group heading. Same string = same group. |
 | `icon` | `ReactNode` | Rendered before the label. |
 | `shortcut` | `string` | Display-only shortcut hint, right-aligned. |
 | `keywords` | `string[]` | Extra search terms for cmdk filtering. |
+| `semanticKey` | `string` | Optional operation identity for overlap detection. |
+| `inputSchema` | `Record<string, { type; description?; required? }>` | Optional argument schema for AI-routed actions. |
+| `approvalRequired` | `boolean` | Optional approval flag (used by external providers). |
 | `disabled` | `boolean` | Grayed out and not selectable. |
-| `onSelect` | `() => void` | Called when the command is selected. |
+| `execute` | `(options: Record<string, unknown>) => void` | **Required.** Action implementation callback. |
+| `onSelect` | `() => void` | Optional direct-selection override (ignored by modifywithai). |
 
-Commands are grouped by `group`, preserving the order they appear in the array. Commands without a `group` render first with no heading.
+When sharing one action array across libraries, each library ignores fields it does not use.
+better-cmdk is command-focused and should primarily define no-argument actions (no `inputSchema`).
+If modifywithai is also used, keep argument-requiring actions (`inputSchema`) in the same shared array.
+If a shared standard `actions` array already exists, extend it in place instead of creating a second list.
+
+Actions are grouped by `group`, preserving the order they appear in the array. Actions without a `group` render first with no heading.
 
 ### Customizing labels
 
 ```tsx
 <CommandMenu
-  commands={commands}
-  commandsPlaceholder="Type a command..."   // default: "Search or ask AI..."
-  commandsAskAILabel="Chat with AI"         // default: "Ask AI"
+  actions={actions}
+  actionsPlaceholder="Type a command..."   // default: "Search or ask AI..."
+  actionsAskAILabel="Chat with AI"         // default: "Ask AI"
   mobile={{ layout: "keyboard-last" }}
 />
 ```
@@ -144,7 +159,7 @@ export function App() {
   const [open, setOpen] = useState(false)
 
   return (
-    <CommandMenu open={open} onOpenChange={setOpen} chatEndpoint="/api/chat">
+    <CommandMenu open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Search or ask AI..." showSendButton />
       <CommandList>
         <CommandGroup heading="Navigation">
@@ -163,7 +178,7 @@ export function App() {
 }
 ```
 
-`commands` and `children` are mutually exclusive. If both are provided, `commands` wins and a dev warning is logged.
+`actions` and `children` are mutually exclusive. If both are provided, `actions` wins and a dev warning is logged.
 
 ---
 
@@ -195,13 +210,23 @@ If you already use shadcn's command components, change the import source:
 - `CommandEmpty` from shadcn is automatically ignored with a dev console warning. The AI empty state replaces it.
 - `Command` is exported for inline (non-dialog) usage.
 
-Add `chatEndpoint` or `chat` to enable AI features. Without either, the palette behaves like a standard cmdk dialog.
+AI chat is enabled by default through `https://better-cmdk.com/api/chat` as a developer trial endpoint (free, no signup, 10 requests per 10 minutes). For production, set `chatEndpoint` to your own URL or pass `chat` (for example via modifywithai for agentic capabilities). Set `chatEndpoint={null}` to disable chat.
 
 ---
 
 ## AI Chat
 
-### Internal chat (chatEndpoint)
+### Hosted chat (default)
+
+No setup is required for development:
+
+```tsx
+<CommandMenu open={open} onOpenChange={setOpen} actions={actions} />
+```
+
+The hosted endpoint is a trial service with a rate limit of 10 requests per 10 minutes. Use a custom `chatEndpoint` for production.
+
+### Internal chat (custom `chatEndpoint`)
 
 Point to any AI SDK-compatible streaming endpoint:
 
@@ -210,6 +235,7 @@ Point to any AI SDK-compatible streaming endpoint:
   open={open}
   onOpenChange={setOpen}
   chatEndpoint="/api/chat"
+  actions={actions}
   historyStorageKey="my-app-chat"
   maxConversations={20}
 />
@@ -253,28 +279,34 @@ interface ExternalChat {
   status: "ready" | "submitted" | "streaming" | "error"
   error: Error | null
   addToolApprovalResponse?: (response: { id: string; approved: boolean }) => void
-  agenticActions?: readonly CommandAction[]
+  actions?: readonly CommandAction[]
 }
 ```
 
 ---
 
-## Agentic Actions
+## Assistant-Provided Actions
 
-Pass actions via external chat to show AI-executable actions in the command list. When a user selects one, it starts a chat with the action label as the initial message.
+Pass actions via external chat to show AI-executable actions in the command list. Keep one shared list between your command UI and assistant provider, and extend that existing list in place when adding new actions.
+In this split, better-cmdk is command-focused (no-argument actions) while your assistant provider (for example modifywithai) can own argument-requiring actions (`inputSchema`). Selecting an argument-requiring action starts chat with the action label as the initial message.
 
 ```tsx
 const externalChat: ExternalChat = {
   // ...chat fields
-  agenticActions: [
+  actions: [
     {
       name: "summarize-page",
       label: "Summarize this page",
+      description: "Summarize the current page content",
       execute: (opts) => { /* called by the AI */ },
     },
     {
       name: "translate",
       label: "Translate selection",
+      description: "Translate selected text to a target language",
+      inputSchema: {
+        targetLanguage: { type: "string", required: true },
+      },
       execute: (opts) => { /* ... */ },
     },
   ],
@@ -325,7 +357,7 @@ const history = useChatHistory({
 Access mode, messages, and status to conditionally render different UI:
 
 ```tsx
-<CommandMenu open={open} onOpenChange={setOpen} chatEndpoint="/api/chat">
+<CommandMenu open={open} onOpenChange={setOpen}>
   {({ mode, messages, status, isEnabled }) => (
     <>
       <CommandInput
@@ -353,10 +385,10 @@ Access mode, messages, and status to conditionally render different UI:
 |---|---|---|---|
 | `open` | `boolean` | - | Controls dialog visibility. |
 | `onOpenChange` | `(open: boolean) => void` | - | Called when visibility changes. |
-| `commands` | `CommandDefinition[]` | - | Declarative command list. Mutually exclusive with children. |
-| `commandsPlaceholder` | `string` | `"Search or ask AI..."` | Input placeholder when using `commands`. |
-| `commandsAskAILabel` | `string` | `"Ask AI"` | Label for the AI trigger when using `commands`. |
-| `chatEndpoint` | `string \| null` | `null` | API endpoint for internal chat. |
+| `actions` | `readonly CommandAction[]` | - | Declarative action list. Mutually exclusive with children. |
+| `actionsPlaceholder` | `string` | `"Search or ask AI..."` | Input placeholder when using `actions`. |
+| `actionsAskAILabel` | `string` | `"Ask AI"` | Label for the AI trigger when using `actions`. |
+| `chatEndpoint` | `string \| null` | `"https://better-cmdk.com/api/chat"` | Internal chat endpoint. Default is a trial service (10 requests per 10 minutes); use your own URL for production or `null` to disable. |
 | `chat` | `ExternalChat` | - | External chat implementation. |
 | `askAILabel` | `string` | - | Label for the AI trigger (children mode). |
 | `onModeChange` | `(mode: "command" \| "chat") => void` | - | Called when switching between command and chat. |
@@ -364,7 +396,7 @@ Access mode, messages, and status to conditionally render different UI:
 | `maxConversations` | `number` | `50` | Maximum saved conversations. |
 | `mobile` | `CommandMenuMobileOptions` | Mobile defaults enabled | Mobile sheet/gesture/keyboard behavior. |
 | `title` | `string` | `"Command Palette"` | Dialog title (screen reader only). |
-| `description` | `string` | `"Search for a command to run..."` | Dialog description (screen reader only). |
+| `description` | `string` | `"Search for an action to run..."` | Dialog description (screen reader only). |
 | `corners` | `"none" \| "sm" \| "md" \| "lg" \| "xl"` | `"xl"` | Border radius preset. |
 | `borderColor` | `string` | - | Custom ring/border color. |
 | `className` | `string` | - | Class for the dialog content. |
@@ -401,7 +433,7 @@ Gesture behavior uses a lower-right activation zone by default: hold, then swipe
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `actions` | `readonly CommandAction[]` | - | Actions to render as items. Falls back to `agenticActions` from context. |
+| `actions` | `readonly CommandAction[]` | - | Actions to render as items. Falls back to `actions` from context. |
 | `actionsHeading` | `string` | `"Actions"` | Heading for the actions group. |
 | `className` | `string` | - | Class for the list container. |
 
@@ -418,8 +450,8 @@ Gesture behavior uses a lower-right activation zone by default: hold, then swipe
 
 | Key | Mode | Action |
 |---|---|---|
-| Type | Command | Filters commands via cmdk |
-| Enter | Command | Selects highlighted command |
+| Type | Command | Filters actions via cmdk |
+| Enter | Command | Selects highlighted action |
 | Enter | Chat | Sends message |
 | Cmd+Enter / Ctrl+Enter | Command | Starts chat with current query |
 | Cmd+Enter / Ctrl+Enter | Chat | Sends message |
@@ -481,9 +513,8 @@ import {
 
 // Types
 import type {
-  CommandDefinition,
-  CommandMenuProps,
   CommandAction,
+  CommandMenuProps,
   ExternalChat,
   CommandMenuMode,
   CommandMenuStatus,

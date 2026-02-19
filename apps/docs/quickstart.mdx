@@ -1,435 +1,214 @@
 ---
 title: "Quickstart"
-description: "Install better-cmdk and build a command palette with AI chat"
+description: "Install better-cmdk and ship a command palette with built-in AI chat"
 ---
 
-Install better-cmdk to add a command palette with AI chat to your React app.
+<Info>
+**Prerequisites:** React 18+ and Tailwind CSS v4.  
+Built-in AI chat works out of the box through `https://better-cmdk.com/api/chat` as a free developer trial (no signup, 10 requests per 10 minutes).  
+Optional for a custom/self-hosted AI endpoint: Vercel AI SDK (`ai`, `@ai-sdk/react`).  
+Optional for agent actions: [modifywithai](https://modifywithai.com).
+</Info>
 
-## 1. Install
+<Steps>
+  <Step title="Install">
+    <CodeGroup>
+    ```bash npm
+    npm install better-cmdk
+    ```
+    ```bash pnpm
+    pnpm add better-cmdk
+    ```
+    ```bash bun
+    bun add better-cmdk
+    ```
+    </CodeGroup>
 
-<CodeGroup>
-```bash npm
-npm install better-cmdk
-```
-```bash pnpm
-pnpm add better-cmdk
-```
-```bash bun
-bun add better-cmdk
-```
-</CodeGroup>
+    Install peer dependencies if needed:
 
-### Peer dependencies
+    ```bash
+    npm install react react-dom tailwindcss
+    ```
+  </Step>
 
-better-cmdk requires React 18+ and Tailwind CSS v4:
+  <Step title="Import styles">
+    In your global CSS file:
 
-```bash
-npm install react react-dom tailwindcss
-```
+    ```css
+    @import "tailwindcss";
+    @import "better-cmdk";
+    ```
 
-For AI chat, you also need the Vercel AI SDK:
+    Optional token overrides (scoped under `.bcmdk-root`):
 
-```bash
-npm install ai @ai-sdk/react @ai-sdk/openai
-```
+    ```css
+    .bcmdk-root {
+      --bcmdk-radius: 0.625rem;
+      --bcmdk-primary: 0.205 0 0;
+      --bcmdk-primary-foreground: 0.985 0 0;
+      --bcmdk-border: 0.922 0 0;
+    }
+    ```
+  </Step>
 
-## 2. Import better-cmdk styles
-
-better-cmdk ships precompiled styles:
-
-```css
-@import "tailwindcss";
-@import "better-cmdk";
-```
-
-Then optionally override better-cmdk's namespaced tokens.
-
-<Accordion title="CSS variables">
-  These are better-cmdk's namespaced tokens. Override them to match your brand.
-
-  ```css
-  .bcmdk-root {
-    --bcmdk-radius: 0.625rem;
-    --bcmdk-background: 1 0 0;
-    --bcmdk-foreground: 0.145 0 0;
-    --bcmdk-primary: 0.205 0 0;
-    --bcmdk-primary-foreground: 0.985 0 0;
-    --bcmdk-muted: 0.97 0 0;
-    --bcmdk-muted-foreground: 0.556 0 0;
-    --bcmdk-accent: 0.97 0 0;
-    --bcmdk-accent-foreground: 0.205 0 0;
-    --bcmdk-border: 0.922 0 0;
-    --bcmdk-input: 0.922 0 0;
-    --bcmdk-ring: 0.708 0 0;
-  }
-  ```
-</Accordion>
-
-## 3. Basic command palette
-
-Start with a basic command palette — no AI yet. Users press `⌘K`, search, and select.
-
-<Tabs>
-  <Tab title="Recommended">
-    Define your commands as data and pass them to `CommandMenu`. The component handles rendering, grouping, and search.
+  <Step title="Define one actions array">
+    Start with one `actions` array. `CommandMenu` will use hosted AI chat by default.
 
     ```tsx
     "use client";
 
-    import { useState, useEffect } from "react";
-    import { CalendarIcon, SearchIcon, UserIcon, SettingsIcon } from "lucide-react";
-    import { CommandMenu, type CommandDefinition } from "better-cmdk";
-
-    const commands: CommandDefinition[] = [
-      {
-        name: "calendar",
-        label: "Calendar",
-        icon: <CalendarIcon className="size-4" />,
-        group: "Suggestions",
-        onSelect: () => console.log("Calendar selected"),
-      },
-      {
-        name: "search",
-        label: "Search",
-        icon: <SearchIcon className="size-4" />,
-        group: "Suggestions",
-        onSelect: () => console.log("Search selected"),
-      },
-      {
-        name: "profile",
-        label: "Profile",
-        icon: <UserIcon className="size-4" />,
-        group: "Settings",
-        shortcut: "⌘P",
-        onSelect: () => console.log("Profile selected"),
-      },
-      {
-        name: "settings",
-        label: "Settings",
-        icon: <SettingsIcon className="size-4" />,
-        group: "Settings",
-        shortcut: "⌘S",
-        onSelect: () => console.log("Settings selected"),
-      },
-    ];
+    import { useState } from "react";
+    import { useRouter } from "next/navigation";
+    import { CommandMenu, type CommandAction } from "better-cmdk";
+    import { LayoutDashboardIcon, SettingsIcon } from "lucide-react";
 
     export function CommandPalette() {
       const [open, setOpen] = useState(false);
+      const router = useRouter();
 
-      useEffect(() => {
-        const down = (e: KeyboardEvent) => {
-          if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            setOpen((open) => !open);
-          }
-        };
-        document.addEventListener("keydown", down);
-        return () => document.removeEventListener("keydown", down);
-      }, []);
+      const actions: CommandAction[] = [
+        {
+          name: "go-dashboard",
+          label: "Go to Dashboard",
+          description: "Navigate to the dashboard page",
+          group: "Navigation",
+          icon: <LayoutDashboardIcon className="size-4" />,
+          execute: () => router.push("/dashboard"),
+        },
+        {
+          name: "open-settings",
+          label: "Open Settings",
+          description: "Navigate to the settings page",
+          group: "Navigation",
+          icon: <SettingsIcon className="size-4" />,
+          shortcut: "⌘,",
+          execute: () => router.push("/settings"),
+        },
+        {
+          name: "navigate-to",
+          label: "Navigate to page",
+          description: "Navigate to a specific route in the app",
+          group: "Navigation",
+          inputSchema: {
+            path: {
+              type: "string",
+              description: "Destination path",
+              required: true,
+            },
+          },
+          execute: ({ path }) => router.push(String(path)),
+        },
+      ];
 
       return (
-        <CommandMenu
-          open={open}
-          onOpenChange={setOpen}
-          commands={commands}
-          mobile={{ layout: "keyboard-last" }}
-        />
+        <>
+          <button onClick={() => setOpen(true)}>Open palette</button>
+          <CommandMenu open={open} onOpenChange={setOpen} actions={actions} />
+        </>
       );
     }
     ```
-  </Tab>
-  <Tab title="shadcn/cmdk compatible">
-    If you're migrating from shadcn/cmdk, you can use JSX children instead. This gives you full control over rendering.
+
+    <Tip>
+    Hosted chat is enabled by default via `https://better-cmdk.com/api/chat` so you can test quickly, but it is rate-limited (10 requests per 10 minutes) and intended for development. For production, use your own `chatEndpoint` or connect `modifywithai` for agentic workflows.
+    </Tip>
+  </Step>
+
+  <Step title="Optional: use your own AI endpoint">
+    By default, better-cmdk uses the hosted trial endpoint above. Use this step to run your own route for production.
+
+    Install AI SDK packages:
+
+    ```bash
+    npm install ai @ai-sdk/react @ai-sdk/openai
+    ```
+
+    Add a streaming chat endpoint (Next.js example):
+
+    ```ts
+    // app/api/chat/route.ts
+    import { openai } from "@ai-sdk/openai";
+    import { streamText, convertToModelMessages, type UIMessage } from "ai";
+
+    export async function POST(request: Request) {
+      const { messages }: { messages: UIMessage[] } = await request.json();
+
+      const result = streamText({
+        model: openai("gpt-4o-mini"),
+        messages: await convertToModelMessages(messages),
+        system: "You are a helpful assistant in a command palette.",
+      });
+
+      return result.toUIMessageStreamResponse();
+    }
+    ```
+
+    Point `CommandMenu` to your route:
 
     ```tsx
-    "use client";
-
-    import { useState, useEffect } from "react";
-    import {
-      CommandDialog,
-      CommandInput,
-      CommandList,
-      CommandEmpty,
-      CommandGroup,
-      CommandItem,
-      CommandSeparator,
-      CommandShortcut,
-    } from "better-cmdk";
-
-    export function CommandPalette() {
-      const [open, setOpen] = useState(false);
-
-      useEffect(() => {
-        const down = (e: KeyboardEvent) => {
-          if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            setOpen((open) => !open);
-          }
-        };
-        document.addEventListener("keydown", down);
-        return () => document.removeEventListener("keydown", down);
-      }, []);
-
-      return (
-        <CommandDialog open={open} onOpenChange={setOpen}>
-          <CommandInput placeholder="Type a command or search..." />
-          <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup heading="Suggestions">
-              <CommandItem>Calendar</CommandItem>
-              <CommandItem>Search</CommandItem>
-            </CommandGroup>
-            <CommandSeparator />
-            <CommandGroup heading="Settings">
-              <CommandItem>
-                Profile
-                <CommandShortcut>⌘P</CommandShortcut>
-              </CommandItem>
-              <CommandItem>
-                Settings
-                <CommandShortcut>⌘S</CommandShortcut>
-              </CommandItem>
-            </CommandGroup>
-          </CommandList>
-        </CommandDialog>
-      );
-    }
-    ```
-  </Tab>
-</Tabs>
-
-This gives you a `⌘K`-triggered modal with fuzzy search filtering, keyboard navigation, and grouped commands.
-
-## 4. Add AI chat
-
-Now add AI chat. When no command matches, users can ask the AI directly.
-
-### Set up the API route
-
-Create a streaming chat endpoint. Here's a Next.js example using the Vercel AI SDK with OpenAI:
-
-```tsx
-// app/api/chat/route.ts
-import { openai } from "@ai-sdk/openai";
-import { streamText, type UIMessage, convertToModelMessages } from "ai";
-
-export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
-
-  const result = streamText({
-    model: openai("gpt-4o-mini"),
-    messages: await convertToModelMessages(messages),
-    system:
-      "You are a helpful assistant in a command palette. Keep responses concise.",
-  });
-
-  return result.toUIMessageStreamResponse();
-}
-```
-
-### Use CommandMenu
-
-Point `CommandMenu` at your API endpoint:
-
-<Tabs>
-  <Tab title="Recommended">
-    Add `chatEndpoint` to your existing `commands`-based palette:
-
-    ```tsx
-    "use client";
-
-    import { useState, useEffect } from "react";
-    import { CalendarIcon, SearchIcon, UserIcon, SettingsIcon } from "lucide-react";
-    import { CommandMenu, type CommandDefinition } from "better-cmdk";
-
-    const commands: CommandDefinition[] = [
-      { name: "calendar", label: "Calendar", icon: <CalendarIcon className="size-4" />, group: "Suggestions", onSelect: () => console.log("Calendar") },
-      { name: "search", label: "Search", icon: <SearchIcon className="size-4" />, group: "Suggestions", onSelect: () => console.log("Search") },
-      { name: "profile", label: "Profile", icon: <UserIcon className="size-4" />, group: "Settings", shortcut: "⌘P", onSelect: () => console.log("Profile") },
-      { name: "settings", label: "Settings", icon: <SettingsIcon className="size-4" />, group: "Settings", shortcut: "⌘S", onSelect: () => console.log("Settings") },
-    ];
-
-    export function CommandPalette() {
-      const [open, setOpen] = useState(false);
-
-      useEffect(() => {
-        const down = (e: KeyboardEvent) => {
-          if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            setOpen((open) => !open);
-          }
-        };
-        document.addEventListener("keydown", down);
-        return () => document.removeEventListener("keydown", down);
-      }, []);
-
-      return (
-        <CommandMenu
-          open={open}
-          onOpenChange={setOpen}
-          commands={commands}
-          chatEndpoint="/api/chat"
-        />
-      );
-    }
-    ```
-  </Tab>
-  <Tab title="shadcn/cmdk compatible">
-    Replace `CommandDialog` with `CommandMenu` and use the children pattern:
-
-    ```tsx
-    "use client";
-
-    import { useState, useEffect } from "react";
-    import {
-      CommandMenu,
-      CommandMenuInput,
-      CommandMenuList,
-      CommandMenuEmpty,
-      CommandGroup,
-      CommandItem,
-      CommandShortcut,
-    } from "better-cmdk";
-
-    export function CommandPalette() {
-      const [open, setOpen] = useState(false);
-
-      useEffect(() => {
-        const down = (e: KeyboardEvent) => {
-          if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            setOpen((open) => !open);
-          }
-        };
-        document.addEventListener("keydown", down);
-        return () => document.removeEventListener("keydown", down);
-      }, []);
-
-      return (
-        <CommandMenu
-          open={open}
-          onOpenChange={setOpen}
-          chatEndpoint="/api/chat"
-        >
-          <CommandMenuInput placeholder="Search or ask AI..." showSendButton />
-          <CommandMenuList>
-            <CommandMenuEmpty />
-            <CommandGroup heading="Actions">
-              <CommandItem onSelect={() => console.log("Profile")}>
-                Profile
-                <CommandShortcut>⌘P</CommandShortcut>
-              </CommandItem>
-              <CommandItem onSelect={() => console.log("Settings")}>
-                Settings
-                <CommandShortcut>⌘S</CommandShortcut>
-              </CommandItem>
-            </CommandGroup>
-          </CommandMenuList>
-        </CommandMenu>
-      );
-    }
-    ```
-  </Tab>
-</Tabs>
-
-Your command palette now has two modes:
-
-- **Command mode** — type to fuzzy-search commands. If nothing matches, an "Ask AI" option appears.
-- **Chat mode** — select "Ask AI" or press `⌘Enter` to switch. Type a question and get a streaming AI response.
-
-Press `Escape` in chat mode to return to command mode.
-
-## 5. Use with modifywithai.com
-
-[modifywithai.com](https://modifywithai.com) is a managed AI agent platform that can take actions in your app on behalf of the user — with built-in approval gates so users stay in control. Using modifywithai is optional but recommended.
-
-### Install modifywithai
-
-```bash
-bun add modifywithai @ai-sdk/react ai
-```
-
-### Create a token endpoint
-
-```ts
-// app/api/mwai/token/route.ts
-import { createAssistantTokenHandler } from "modifywithai/nextjs"
-
-export const POST = createAssistantTokenHandler({
-  appId: process.env.MWAI_APP_ID!,
-  // apiKey defaults to process.env.MWAI_API_KEY
-})
-```
-
-### Connect to CommandMenu
-
-The `useAssistant()` hook from modifywithai returns an object directly compatible with CommandMenu's `chat` prop. Define your **commands** (what shows in the palette) and **actions** (what the AI agent can do) separately:
-
-```tsx
-import { useState, useEffect } from "react";
-import { useAssistant, type ActionDefinition } from "modifywithai";
-import { CommandMenu, type CommandDefinition } from "better-cmdk";
-import { CalendarIcon, SettingsIcon } from "lucide-react";
-
-// Commands — what shows in the palette
-const commands: CommandDefinition[] = [
-  { name: "calendar", label: "Calendar", icon: <CalendarIcon className="size-4" />, group: "Navigation", onSelect: () => router.push("/calendar") },
-  { name: "settings", label: "Settings", icon: <SettingsIcon className="size-4" />, group: "Navigation", shortcut: "⌘,", onSelect: () => router.push("/settings") },
-];
-
-// Actions — what the AI agent can do on behalf of the user
-const actions: ActionDefinition[] = [
-  {
-    name: "toggleDarkMode",
-    description: "Toggle between light and dark mode",
-    execute: () => document.documentElement.classList.toggle("dark"),
-  },
-  {
-    name: "navigateTo",
-    description: "Navigate to a page in the app",
-    options: { path: { type: "string", description: "Page path", required: true } },
-    execute: (opts) => { window.location.href = opts.path as string },
-  },
-];
-
-function App() {
-  const [open, setOpen] = useState(false);
-  const assistant = useAssistant({
-    tokenEndpoint: "/api/mwai/token",
-    agenticActions: actions,
-  });
-
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
-
-  return (
     <CommandMenu
       open={open}
       onOpenChange={setOpen}
-      commands={commands}
-      chat={assistant}
+      actions={actions}
+      chatEndpoint="/api/chat"
     />
-  );
-}
-```
+    ```
+  </Step>
 
-**Commands** populate the palette with searchable items users can select directly. **Actions** tell the modifywithai agent what it can do — the agent invokes them in chat mode with user approval.
+  <Step title="Optional: connect modifywithai (recommended)">
+    Install:
+
+    ```bash
+    bun add modifywithai ai @ai-sdk/react
+    ```
+
+    Create a token endpoint:
+
+    ```ts
+    // app/api/mwai/token/route.ts
+    import { createAssistantTokenHandler } from "modifywithai/nextjs";
+
+    export const POST = createAssistantTokenHandler({
+      appId: process.env.MWAI_APP_ID!,
+    });
+    ```
+
+    Reuse the same `actions` array with `useAssistant()`:
+
+    ```tsx
+    import { useAssistant } from "modifywithai";
+
+    const assistant = useAssistant({
+      tokenEndpoint: "/api/mwai/token",
+      actions,
+    });
+
+    <CommandMenu
+      open={open}
+      onOpenChange={setOpen}
+      actions={actions}
+      chat={assistant}
+    />;
+    ```
+
+    `better-cmdk` and `modifywithai` share the same `CommandAction` shape. Each library ignores fields it does not need.
+  </Step>
+</Steps>
+
+## Action behavior
+
+| Action kind | Condition | Selection behavior |
+|-------------|-----------|--------------------|
+| Command-like | No `inputSchema` | Executes directly from command mode |
+| Argument-requiring | Has `inputSchema` | Routed through chat so the AI can provide arguments |
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Extending" icon="puzzle-piece" href="/extending">
-    Define commands, customize theming, and build advanced integrations.
+  <Card title="Extending" icon="book-open" href="/extending">
+    Design high-quality actions, approvals, custom rendering, and theming.
   </Card>
-  <Card title="modifywithai Docs" icon="book" href="https://modifywithai.com/docs">
-    Learn how to set up the agent platform that powers your AI actions.
+  <Card title="ModifyWithAI docs" icon="plug" href="https://modifywithai.com/docs">
+    Set up action execution, context, and escalation with the agent platform.
   </Card>
 </CardGroup>

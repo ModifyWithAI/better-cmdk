@@ -19,37 +19,47 @@ const FRAMEWORK_CONFIG: Record<
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { CommandMenu, type CommandDefinition } from "better-cmdk"
+import { CommandMenu, type CommandAction } from "better-cmdk"
 import { LayoutDashboardIcon, SettingsIcon, SunMoonIcon } from "lucide-react"
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  // REPLACE with discovered commands from my codebase
-  const commands: CommandDefinition[] = [
+  // REPLACE with discovered actions from my codebase
+  const actions: CommandAction[] = [
     {
-      name: "dashboard",
+      name: "go-dashboard",
       label: "Go to Dashboard",
+      description: "Navigate to the dashboard page",
       group: "Navigation",
       icon: <LayoutDashboardIcon className="size-4" />,
       shortcut: "⌘D",
-      onSelect: () => router.push("/dashboard"),
+      execute: () => router.push("/dashboard"),
     },
     {
-      name: "settings",
-      label: "Settings",
+      name: "open-settings",
+      label: "Open Settings",
+      description: "Navigate to the settings page",
       group: "Navigation",
       icon: <SettingsIcon className="size-4" />,
       shortcut: "⌘,",
-      onSelect: () => router.push("/settings"),
+      execute: () => router.push("/settings"),
     },
     {
-      name: "dark-mode",
+      name: "toggle-dark-mode",
       label: "Toggle dark mode",
+      description: "Toggle the application theme",
       group: "Appearance",
       icon: <SunMoonIcon className="size-4" />,
-      onSelect: () => document.documentElement.classList.toggle("dark"),
+      execute: () => document.documentElement.classList.toggle("dark"),
+    },
+    {
+      name: "go-home",
+      label: "Go Home",
+      description: "Navigate to the home page",
+      group: "Navigation",
+      execute: () => router.push("/"),
     },
   ]
 
@@ -68,7 +78,7 @@ export function CommandPalette() {
     <CommandMenu
       open={open}
       onOpenChange={setOpen}
-      commands={commands}
+      actions={actions}
     />
   )
 }
@@ -84,7 +94,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: openai("gpt-4o-mini"),
     messages: await convertToModelMessages(messages),
-    system: "You are a helpful assistant in a command palette. Keep responses concise.",
+    system: "You are a helpful assistant in an action palette. Keep responses concise.",
   })
   return result.toUIMessageStreamResponse()
 }
@@ -101,36 +111,46 @@ export async function POST(req: Request) {
 		component: `\`\`\`tsx
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router"
-import { CommandMenu, type CommandDefinition } from "better-cmdk"
+import { CommandMenu, type CommandAction } from "better-cmdk"
 import { LayoutDashboardIcon, SettingsIcon, SunMoonIcon } from "lucide-react"
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
 
-  const commands: CommandDefinition[] = [
+  const actions: CommandAction[] = [
     {
-      name: "dashboard",
+      name: "go-dashboard",
       label: "Go to Dashboard",
+      description: "Navigate to the dashboard page",
       group: "Navigation",
       icon: <LayoutDashboardIcon className="size-4" />,
       shortcut: "⌘D",
-      onSelect: () => navigate("/dashboard"),
+      execute: () => navigate("/dashboard"),
     },
     {
-      name: "settings",
-      label: "Settings",
+      name: "open-settings",
+      label: "Open Settings",
+      description: "Navigate to the settings page",
       group: "Navigation",
       icon: <SettingsIcon className="size-4" />,
       shortcut: "⌘,",
-      onSelect: () => navigate("/settings"),
+      execute: () => navigate("/settings"),
     },
     {
-      name: "dark-mode",
+      name: "toggle-dark-mode",
       label: "Toggle dark mode",
+      description: "Toggle the application theme",
       group: "Appearance",
       icon: <SunMoonIcon className="size-4" />,
-      onSelect: () => document.documentElement.classList.toggle("dark"),
+      execute: () => document.documentElement.classList.toggle("dark"),
+    },
+    {
+      name: "go-home",
+      label: "Go Home",
+      description: "Navigate to the home page",
+      group: "Navigation",
+      execute: () => navigate("/"),
     },
   ]
 
@@ -149,7 +169,7 @@ export function CommandPalette() {
     <CommandMenu
       open={open}
       onOpenChange={setOpen}
-      commands={commands}
+      actions={actions}
     />
   )
 }
@@ -166,7 +186,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const result = streamText({
     model: openai("gpt-4o-mini"),
     messages: await convertToModelMessages(messages),
-    system: "You are a helpful assistant in a command palette. Keep responses concise.",
+    system: "You are a helpful assistant in an action palette. Keep responses concise.",
   })
   return result.toUIMessageStreamResponse()
 }
@@ -183,36 +203,46 @@ export async function action({ request }: ActionFunctionArgs) {
 		component: `\`\`\`tsx
 import { useState, useEffect } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { CommandMenu, type CommandDefinition } from "better-cmdk"
+import { CommandMenu, type CommandAction } from "better-cmdk"
 import { LayoutDashboardIcon, SettingsIcon, SunMoonIcon } from "lucide-react"
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
 
-  const commands: CommandDefinition[] = [
+  const actions: CommandAction[] = [
     {
-      name: "dashboard",
+      name: "go-dashboard",
       label: "Go to Dashboard",
+      description: "Navigate to the dashboard page",
       group: "Navigation",
       icon: <LayoutDashboardIcon className="size-4" />,
       shortcut: "⌘D",
-      onSelect: () => navigate({ to: "/dashboard" }),
+      execute: () => navigate({ to: "/dashboard" }),
     },
     {
-      name: "settings",
-      label: "Settings",
+      name: "open-settings",
+      label: "Open Settings",
+      description: "Navigate to the settings page",
       group: "Navigation",
       icon: <SettingsIcon className="size-4" />,
       shortcut: "⌘,",
-      onSelect: () => navigate({ to: "/settings" }),
+      execute: () => navigate({ to: "/settings" }),
     },
     {
-      name: "dark-mode",
+      name: "toggle-dark-mode",
       label: "Toggle dark mode",
+      description: "Toggle the application theme",
       group: "Appearance",
       icon: <SunMoonIcon className="size-4" />,
-      onSelect: () => document.documentElement.classList.toggle("dark"),
+      execute: () => document.documentElement.classList.toggle("dark"),
+    },
+    {
+      name: "go-home",
+      label: "Go Home",
+      description: "Navigate to the home page",
+      group: "Navigation",
+      execute: () => navigate({ to: "/" }),
     },
   ]
 
@@ -231,7 +261,7 @@ export function CommandPalette() {
     <CommandMenu
       open={open}
       onOpenChange={setOpen}
-      commands={commands}
+      actions={actions}
     />
   )
 }
@@ -249,7 +279,7 @@ export const APIRoute = createAPIFileRoute("/api/chat")({
     const result = streamText({
       model: openai("gpt-4o-mini"),
       messages: await convertToModelMessages(messages),
-      system: "You are a helpful assistant in a command palette. Keep responses concise.",
+      system: "You are a helpful assistant in an action palette. Keep responses concise.",
     })
     return result.toUIMessageStreamResponse()
   },
@@ -267,32 +297,44 @@ export const APIRoute = createAPIFileRoute("/api/chat")({
 		name: "Vite / Other",
 		component: `\`\`\`tsx
 import { useState, useEffect } from "react"
-import { CommandMenu, type CommandDefinition } from "better-cmdk"
+import { CommandMenu, type CommandAction } from "better-cmdk"
 import { LayoutDashboardIcon, SettingsIcon, SunMoonIcon } from "lucide-react"
 
-const commands: CommandDefinition[] = [
+const actions: CommandAction[] = [
   {
-    name: "dashboard",
+    name: "go-dashboard",
     label: "Go to Dashboard",
+    description: "Navigate to the dashboard page",
     group: "Navigation",
     icon: <LayoutDashboardIcon className="size-4" />,
     shortcut: "⌘D",
-    onSelect: () => (window.location.href = "/dashboard"),
+    execute: () => (window.location.href = "/dashboard"),
   },
   {
-    name: "settings",
-    label: "Settings",
+    name: "open-settings",
+    label: "Open Settings",
+    description: "Navigate to the settings page",
     group: "Navigation",
     icon: <SettingsIcon className="size-4" />,
     shortcut: "⌘,",
-    onSelect: () => (window.location.href = "/settings"),
+    execute: () => (window.location.href = "/settings"),
   },
   {
-    name: "dark-mode",
+    name: "toggle-dark-mode",
     label: "Toggle dark mode",
+    description: "Toggle the application theme",
     group: "Appearance",
     icon: <SunMoonIcon className="size-4" />,
-    onSelect: () => document.documentElement.classList.toggle("dark"),
+    execute: () => document.documentElement.classList.toggle("dark"),
+  },
+  {
+    name: "go-home",
+    label: "Go Home",
+    description: "Navigate to the home page",
+    group: "Navigation",
+    execute: () => {
+      window.location.href = "/"
+    },
   },
 ]
 
@@ -314,7 +356,7 @@ export function CommandPalette() {
     <CommandMenu
       open={open}
       onOpenChange={setOpen}
-      commands={commands}
+      actions={actions}
     />
   )
 }
@@ -331,7 +373,7 @@ const { messages }: { messages: UIMessage[] } = await req.json()
 const result = streamText({
   model: openai("gpt-4o-mini"),
   messages: await convertToModelMessages(messages),
-  system: "You are a helpful assistant in a command palette. Keep responses concise.",
+  system: "You are a helpful assistant in an action palette. Keep responses concise.",
 })
 return result.toUIMessageStreamResponse()
 \`\`\``,
@@ -346,9 +388,9 @@ return result.toUIMessageStreamResponse()
 export const INTEGRATION_PROMPT = (framework: Framework): string => {
 	const config = FRAMEWORK_CONFIG[framework]
 
-	return `# Set up better-cmdk command palette (${config.name})
+	return `# Set up better-cmdk action palette (${config.name})
 
-better-cmdk is a command palette with AI chat for React. Your task is to install it, discover commands from my codebase, and create a working command palette.
+better-cmdk is a command palette with AI chat for React. Your task is to install it, discover actions from my codebase, and create a working palette.
 
 ## Step 1: Analyze my codebase
 
@@ -359,14 +401,12 @@ Before making changes, detect:
 
 Also ask me:
 
-**1. Do you want AI chat in the command palette?**
-- No AI — command palette only
-- Built-in chat — simple Q&A via a Vercel AI SDK endpoint
-- ModifyWithAI (Recommended) — the AI can execute actions in your app (create items, navigate, toggle settings), ask for approval before destructive operations, and understand what's on screen. Requires a ModifyWithAI account at https://modifywithai.com
+**1. Do you want AI chat in the palette?**
+- No AI — action search only
+- Built-in chat — free developer-trial Q&A via https://better-cmdk.com/api/chat (no signup, 10 requests per 10 minutes; use your own chat URL for production)
+- ModifyWithAI (Recommended) — the AI can execute actions in your app (create items, navigate, toggle settings), ask for approval before destructive operations, and understand what's on screen. Get your App ID and API key from https://modifywithai.com/dashboard
 
-**With ModifyWithAI, the command palette becomes an AI workspace.** Users search commands for quick access, then switch to AI chat for anything that needs reasoning — "move all archived items to trash", "summarize my recent activity". The AI executes actions directly in the app, with approval prompts for destructive operations. ModifyWithAI is not required — better-cmdk works on its own as a command palette, with or without AI chat.
-
-**2. If shadcn/ui command components detected:** Do you want to migrate them to better-cmdk, or keep both?
+**2. If shadcn/ui command components are detected:** Do you want to migrate them to better-cmdk, or keep both?
 
 Tell me what you detected, which path you'll follow, and what you'll be adding better-cmdk to.
 
@@ -394,16 +434,16 @@ yarn add better-cmdk
 ### Built-in chat:
 \`\`\`bash
 # bun
-bun add better-cmdk ai @ai-sdk/react @ai-sdk/openai
+bun add better-cmdk
 # pnpm
-pnpm add better-cmdk ai @ai-sdk/react @ai-sdk/openai
+pnpm add better-cmdk
 # npm
-npm install better-cmdk ai @ai-sdk/react @ai-sdk/openai
+npm install better-cmdk
 # yarn
-yarn add better-cmdk ai @ai-sdk/react @ai-sdk/openai
+yarn add better-cmdk
 \`\`\`
 
-Substitute \`@ai-sdk/anthropic\`, \`@ai-sdk/google\`, etc. based on my preferred AI provider.
+If you later add a custom/self-hosted endpoint, install AI SDK/provider packages for that server route.
 
 ### ModifyWithAI:
 \`\`\`bash
@@ -432,9 +472,7 @@ Add to my main CSS file:
 @import "better-cmdk";
 \`\`\`
 
-If my app wants custom theming, override better-cmdk's namespaced variables.
-
-Add this minimal override block only when needed:
+If my app needs custom theming, override better-cmdk's namespaced variables:
 
 \`\`\`css
 .bcmdk-root {
@@ -461,71 +499,115 @@ Use the same CSS import approach:
 
 ---
 
-## Step 4: CRITICAL — Command Discovery
+## Step 4: CRITICAL — Command Action Discovery (better-cmdk scope)
 
-Before writing any component code, **crawl my entire codebase** to discover ALL user-facing operations that should be in the command palette.
+Before writing component code, **crawl my codebase** to discover all meaningful actions that can run immediately from the command palette.
 
-### How to discover commands:
+### Scope rules (required)
 
-1. **Search all routes/pages** → navigation commands ("Go to Dashboard", "Go to Settings")
-2. **Search all buttons and links** → action commands ("Create project", "Export data")
-3. **Search all settings/toggles** → preference commands ("Toggle dark mode", "Change language")
-4. **Search all CRUD operations** → data commands ("New item", "Delete selected")
-5. **Search all utility functions** → utility commands ("Copy link", "Download report", "Share")
-6. **Search for existing keyboard shortcuts** → preserve as shortcut hints
+- better-cmdk is concerned with **no-argument command actions** (no \`inputSchema\`, no required arguments)
+- Define actions as underlying app/domain operations (API calls, mutations, workflow transitions), not raw UI gestures
+- Model what the app does, not how a user physically triggers it
+- Good: \`goToBilling\`, \`toggleSidebar\`, \`archiveCurrentProject\`
+- Bad: \`clickCreateButton\`, \`openDropdown\`, \`typeIntoInput\`, \`focusSearchField\`
+- If an operation needs runtime arguments (for example refund amount, assignee, date range), treat it as **modifywithai-owned** and do not add it as a new better-cmdk command action in this step
+- If a standard shared \`actions\` array already exists, **extend it in place**; do not create a second array
+- If no standard shared array exists, create one
 
-### Create a command for EVERY user-facing operation:
+### Discovery checklist
 
-- Button that opens a modal? Command: \`open-create-modal\`
-- Link that navigates to a page? Command: \`go-to-dashboard\`
-- Toggle that changes a setting? Command: \`toggle-dark-mode\`
-- Form that creates something? Command: \`create-new-project\`
-- Search input? Command: \`search\`
-- Sidebar item? Command: \`open-analytics\`
+1. Locate existing action arrays/types first (\`actions\`, \`defineActions(...)\`, exported action modules) and reuse them
+2. Search routes/pages → navigation command actions
+3. Search buttons/links/forms/menus → identify outcomes that can run with no extra user input
+4. Trace handlers to services/API/domain functions → map each to one operation-level command action
+5. Search toggles/settings/feature flags → preference command actions
+6. Search CRUD/services/utilities/API calls → include only operations that can run safely without additional arguments
+7. Search existing keyboard shortcuts → keep as shortcut hints
+8. Mark argument-requiring operations for modifywithai ownership (same shared array, with \`inputSchema\`)
 
-### For each discovered command, define:
+### Canonical single-array rules
+
+Use **one deduped \`actions\` array** as the source of truth:
+
+- better-cmdk-owned entries: no \`inputSchema\` (direct command execution)
+- modifywithai-owned entries (if present): has \`inputSchema\` (agentic argument collection)
+- Keep exactly one canonical action per underlying operation
+- Do not create separate “command” and “AI action” entries for the same operation
+- Put synonyms in \`keywords\`, not duplicate actions
+- Reuse the same \`name\` everywhere (CommandMenu + assistant provider)
+
+Use consistent \`group\` values:
+- \`Navigation\`
+- \`UI / Preferences\`
+- \`Data\`
+- \`Help / Utilities\`
+
+### For each command action discovered, define
 
 - \`name\`: unique kebab-case identifier
-- \`label\`: human-readable display text (what users search for)
-- \`group\`: logical heading — use consistent groups like "Navigation", "Actions", "Settings", "Help"
-- \`icon\`: matching [lucide-react](https://lucide.dev) icon component
-- \`shortcut\`: keyboard shortcut hint if applicable (display-only, e.g. \`"⌘D"\`)
-- \`keywords\`: extra search terms (array of strings) — helps users find commands by alternate names
-- \`disabled\`: set \`true\` to gray out commands that aren't currently available
-- \`onSelect\`: callback that wires to existing app logic
+- \`label\`: human-readable label
+- \`group\`: taxonomy group from above
+- \`icon\`: lucide-react icon when useful
+- \`shortcut\`: optional display hint
+- \`keywords\`: optional search aliases
+- \`semanticKey\`: optional operation identity (required when names differ but operation is the same)
+- \`disabled\`: optional availability guard
+- \`execute\`: required implementation used when the command is selected
+- \`onSelect\`: optional UI-only override (modifywithai ignores it)
 
-**Aim for 10-30 commands.** If you found fewer than 5, you haven't looked hard enough. Report how many you found before proceeding.
+\`inputSchema\` is optional and reserved for modifywithai-owned argument actions in the same shared array.
+Unused fields are safe: each library should ignore values it doesn't need.
+
+**Coverage first, count second.** Many non-trivial apps should land in the 10-30+ no-argument command-action range. If you have fewer than 8, you likely missed meaningful command flows.
 
 ---
 
 ## Step 5: Create the component
 
-Replace the example commands below with the ones you discovered from my codebase.
+Use one shared \`actions\` array (from Step 4). If one already exists, extend it. Do not create a second array.
+Replace examples with discovered actions.
 
 ${config.component}
 
 ---
 
-## Step 6: Add AI chat (skip if "No AI" chosen)
+## Step 6: Add AI chat (skip if “No AI” chosen)
 
 ### Built-in chat
 
-Create a streaming chat API route, then add \`chatEndpoint\` to CommandMenu.
+Use the default hosted endpoint: \`https://better-cmdk.com/api/chat\`.
+This service is provided by better-cmdk as a free developer trial with no signup.
+Rate limit: **10 requests per 10 minutes**.
 
-${config.builtInChatRoute}
-
-Then update CommandMenu to add the \`chatEndpoint\` prop:
+Use CommandMenu without \`chatEndpoint\`:
 
 \`\`\`tsx
 <CommandMenu
   open={open}
   onOpenChange={setOpen}
-  commands={commands}
+  actions={actions}
+/>
+\`\`\`
+
+### Optional: custom/self-hosted endpoint
+
+For production, use your own chat URL (or choose ModifyWithAI for agentic capabilities).
+If you need your own model/provider route, create a streaming chat API route:
+
+${config.builtInChatRoute}
+
+Then update CommandMenu:
+
+\`\`\`tsx
+<CommandMenu
+  open={open}
+  onOpenChange={setOpen}
+  actions={actions}
   chatEndpoint="/api/chat"
 />
 \`\`\`
 
-Set the environment variable:
+Set environment variable:
 
 \`\`\`bash
 echo "OPENAI_API_KEY=sk-..." >> ${config.envFile}
@@ -539,18 +621,24 @@ echo "OPENAI_API_KEY=sk-..." >> ${config.envFile}
 
 After installing modifywithai, read \`${config.mwaiAgentsPath}\` and follow its instructions for:
 - Creating the token endpoint
-- Setting up environment variables (MWAI_APP_ID, MWAI_API_KEY)
+- Setting up environment variables (MWAI_APP_ID, MWAI_API_KEY) from https://modifywithai.com/dashboard
 - Discovering actions from the codebase
 ${config.mwaiNote}
 
-Then connect the assistant to CommandMenu. The \`useAssistant()\` return value from modifywithai is directly compatible with better-cmdk's \`chat\` prop — no adapter needed:
+Use the **same discovered \`actions\` list** for both the assistant provider and CommandMenu.
+UI-only fields (like \`icon\`, \`group\`, \`shortcut\`) are ignored by modifywithai:
+
+Ownership split:
+- better-cmdk focuses on no-argument command actions
+- modifywithai owns both no-argument and argument-requiring actions (\`inputSchema\`)
+- Keep both in one shared array and extend the existing array in place if present
 
 \`\`\`tsx
 import { useAssistant } from "modifywithai"
 
 // Inside your CommandPalette component:
 const assistant = useAssistant({
-  agenticActions: actions, // from action discovery above
+  actions,
   getContext: () => ({
     currentPage: window.location.pathname,
   }),
@@ -559,7 +647,7 @@ const assistant = useAssistant({
 <CommandMenu
   open={open}
   onOpenChange={setOpen}
-  commands={commands}
+  actions={actions}
   chat={assistant}
 />
 \`\`\`
@@ -574,7 +662,7 @@ ${config.mountLocation}
 
 ## Step 8: shadcn/ui migration (if applicable)
 
-If existing shadcn/ui command components were detected, swap imports:
+If existing shadcn/ui command components are detected, swap imports:
 
 \`\`\`diff
 - import {
@@ -595,7 +683,7 @@ If existing shadcn/ui command components were detected, swap imports:
 + } from "better-cmdk"
 \`\`\`
 
-\`CommandDialog\` is an alias for \`CommandMenu\`. All sub-components have the same API. Add \`chatEndpoint\` or \`chat\` to enable AI features — without either, the palette behaves like a standard cmdk dialog.
+\`CommandDialog\` is an alias for \`CommandMenu\`. AI chat works by default via the hosted trial endpoint (10 requests per 10 minutes). For production, use \`chatEndpoint\` with your own URL or pass \`chat\` (for example with ModifyWithAI for agentic capabilities). Set \`chatEndpoint={null}\` to disable.
 
 ---
 
@@ -603,12 +691,15 @@ If existing shadcn/ui command components were detected, swap imports:
 
 After setup, tell me:
 
-1. How many commands you discovered
-2. Which AI path you followed (none / built-in / ModifyWithAI)
-3. [ModifyWithAI only] How many actions you discovered (from modifywithai's AGENTS.md action discovery instructions)
+1. How many no-argument command actions you discovered/added
+2. Whether you reused an existing shared \`actions\` array or created one, and where it lives
+3. Which AI path you followed (none / built-in / ModifyWithAI)
 4. What files you created/modified
-5. That pressing \`⌘K\` opens the palette with all commands grouped correctly
-6. [If AI enabled] That typing a non-matching query shows "Ask AI" and chat works
+5. That pressing \`⌘K\` opens the palette with grouped actions and direct execution works for command actions
+6. [If ModifyWithAI path] That argument-requiring actions (\`inputSchema\`) are kept in the same shared array (extended, not duplicated)
+7. [If built-in/default chat enabled] That you explicitly told me this is a developer-trial endpoint (\`https://better-cmdk.com/api/chat\`, 10 requests per 10 minutes) and that for production I should use my own \`chatEndpoint\` or use ModifyWithAI for agentic capabilities.
+
+End your final response with a dedicated **Hosted Endpoint Note** section so this warning is unmissable.
 
 Docs: https://github.com/ModifyWithAI/better-cmdk/blob/main/INTEGRATION.md
 `

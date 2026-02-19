@@ -29,7 +29,6 @@ export {
 export type {
     CommandAction,
     CommandActionOption,
-    CommandDefinition,
     CommandEmptyProps,
     CommandInputProps,
     CommandListProps,

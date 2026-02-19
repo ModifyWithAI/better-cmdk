@@ -17,6 +17,7 @@ import * as React from "react"
 import {
     type CommandMenuMode,
     CommandMenuProvider,
+    DEFAULT_CHAT_ENDPOINT,
     type ExternalChat,
     useCommandMenuContext,
 } from "../../context/command-menu-context"
@@ -205,12 +206,12 @@ interface CommandMenuProps
     maxConversations?: number
     /** Mobile-specific interaction + layout settings. */
     mobile?: CommandMenuMobileOptions
-    /** Declarative command definitions. Mutually exclusive with children. */
-    commands?: CommandDefinition[]
-    /** Placeholder for the command input when using `commands` prop. */
-    commandsPlaceholder?: string
-    /** Label for the "Ask AI" trigger when using `commands` prop. */
-    commandsAskAILabel?: string
+    /** Declarative action definitions. Mutually exclusive with children. */
+    actions?: readonly CommandAction[]
+    /** Placeholder for the command input when using `actions` prop. */
+    actionsPlaceholder?: string
+    /** Label for the "Ask AI" trigger when using `actions` prop. */
+    actionsAskAILabel?: string
     children?:
         | React.ReactNode
         | ((context: {
@@ -413,7 +414,7 @@ function CommandContent({
 
 const defaultChildren = (
     <>
-        <CommandInput placeholder="Search for commands or ask AI..." showSendButton />
+        <CommandInput placeholder="Search for actions or ask AI..." showSendButton />
         <CommandList>
             <CommandEmpty />
         </CommandList>
@@ -422,14 +423,14 @@ const defaultChildren = (
 
 function CommandMenuInner({
     title = "Command Palette",
-    description = "Search for a command to run...",
+    description = "Search for an action to run...",
     children,
     className,
     corners = "xl",
     borderColor,
-    commands,
-    commandsPlaceholder = "Search for commands or ask AI...",
-    commandsAskAILabel = "Ask AI",
+    actions,
+    actionsPlaceholder = "Search for actions or ask AI...",
+    actionsAskAILabel = "Ask AI",
     mobile,
     ...props
 }: Omit<CommandMenuProps, "chatEndpoint" | "chat" | "onModeChange">) {
@@ -495,18 +496,18 @@ function CommandMenuInner({
     )
 
     const renderChildren = () => {
-        // Declarative commands prop takes precedence
-        if (commands && commands.length > 0) {
+        // Declarative actions prop takes precedence
+        if (actions && actions.length > 0) {
             if (children && process.env.NODE_ENV !== "production") {
                 console.warn(
-                    "[CommandMenu] Both `commands` and `children` were provided. `commands` takes precedence; `children` will be ignored.",
+                    "[CommandMenu] Both `actions` and `children` were provided. `actions` takes precedence; `children` will be ignored.",
                 )
             }
             return (
-                <CommandListFromDefinitions
-                    commands={commands}
-                    placeholder={commandsPlaceholder}
-                    askAILabel={commandsAskAILabel}
+                <ActionListFromActions
+                    actions={actions}
+                    placeholder={actionsPlaceholder}
+                    askAILabel={actionsAskAILabel}
                 />
             )
         }
@@ -609,15 +610,15 @@ function CommandMenuInner({
 }
 
 function CommandMenu({
-    chatEndpoint = null,
+    chatEndpoint = DEFAULT_CHAT_ENDPOINT,
     chat,
     onModeChange,
     onOpenChange,
     historyStorageKey,
     maxConversations,
-    commands,
-    commandsPlaceholder,
-    commandsAskAILabel,
+    actions,
+    actionsPlaceholder,
+    actionsAskAILabel,
     mobile,
     ...props
 }: CommandMenuProps) {
@@ -633,9 +634,9 @@ function CommandMenu({
             <TelemetryErrorBoundary>
                 <CommandMenuInner
                     onOpenChange={onOpenChange}
-                    commands={commands}
-                    commandsPlaceholder={commandsPlaceholder}
-                    commandsAskAILabel={commandsAskAILabel}
+                    actions={actions}
+                    actionsPlaceholder={actionsPlaceholder}
+                    actionsAskAILabel={actionsAskAILabel}
                     mobile={mobile}
                     {...props}
                 />
@@ -806,7 +807,7 @@ function CommandEmpty({
     const { isMobile } = useMobileUIContext()
 
     // cmdk's filtered.count excludes forceMount items (like ask-ai), so
-    // count === 0 means no regular commands matched the search query.
+    // count === 0 means no regular actions matched the search query.
     const filteredCount = useCommandState((state) => state.filtered.count)
 
     const handleAskAI = () => {
@@ -885,27 +886,17 @@ type CommandActionExecuteHandler<TOptions> = {
 }["bivarianceHack"]
 
 /**
- * Minimal action interface compatible with ActionDefinition from modifywithai.
- * Used as read-only metadata for rendering action items in the command list.
- * `execute` is kept for compatibility but is not invoked by better-cmdk.
+ * Unified action interface used by both declarative menu actions and external
+ * provider actions.
  */
 export interface CommandAction {
-    name: string
-    label?: string
-    options?: Partial<Record<string, CommandActionOption>>
-    execute?: CommandActionExecuteHandler<Record<string, unknown>>
-}
-
-/**
- * Declarative command definition for the `commands` prop.
- * Named CommandDefinition to avoid collision with cmdk's Command component.
- */
-export interface CommandDefinition {
     /** Unique key used as cmdk value */
     name: string
     /** Display text (falls back to name) */
     label?: string
-    /** Group heading — commands with the same string appear in the same group */
+    /** Action description used by AI/tooling. */
+    description: string
+    /** Group heading — actions with the same string appear in the same group */
     group?: string
     /** Icon rendered before the label */
     icon?: React.ReactNode
@@ -913,33 +904,93 @@ export interface CommandDefinition {
     shortcut?: string
     /** Extra cmdk search terms */
     keywords?: string[]
+    /**
+     * Optional operation identity used to prevent overlapping actions.
+     * When omitted, `name` is used.
+     */
+    semanticKey?: string
     /** Grayed out, not selectable */
     disabled?: boolean
-    /** Called when the command is selected */
+    /** Called when the action is selected directly */
     onSelect?: () => void
+    /**
+     * Structured input schema for argument-requiring actions.
+     * Actions without `inputSchema` are treated as command-like.
+     */
+    inputSchema?: Partial<Record<string, CommandActionOption>>
+    /** Whether this action requires approval before execution. */
+    approvalRequired?: boolean
+    /** Action execution callback. */
+    execute: CommandActionExecuteHandler<Record<string, unknown>>
+}
+
+function isCommandLikeAction(action: CommandAction): boolean {
+    return action.inputSchema == null
+}
+
+function getActionLabel(action: CommandAction): string {
+    return action.label ?? action.name
+}
+
+function getActionKeywords(action: CommandAction): string[] | undefined {
+    const keywords: string[] = [...(action.keywords ?? [])]
+    if (action.label && action.label !== action.name) {
+        keywords.push(action.label)
+    }
+    if (action.description) {
+        keywords.push(action.description)
+    }
+    return keywords.length > 0 ? keywords : undefined
+}
+
+function useActionSelectionHandler() {
+    const { sendMessage, startNewChat, switchToChat } = useCommandMenuContext()
+
+    return React.useCallback(
+        (action: CommandAction) => {
+            const routeToChat = () => {
+                startNewChat()
+                switchToChat()
+                void sendMessage(getActionLabel(action))
+            }
+
+            if (!isCommandLikeAction(action)) {
+                routeToChat()
+                return
+            }
+
+            if (action.onSelect) {
+                action.onSelect()
+                return
+            }
+
+            action.execute({})
+        },
+        [sendMessage, startNewChat, switchToChat],
+    )
 }
 
 /**
- * Groups commands by their `group` field, preserving encounter order.
- * Ungrouped commands (no `group`) come first with no heading.
+ * Groups actions by their `group` field, preserving encounter order.
+ * Ungrouped actions (no `group`) come first with no heading.
  */
-function groupCommands(
-    commands: CommandDefinition[],
-): { heading: string | undefined; items: CommandDefinition[] }[] {
+function groupActions(
+    actions: readonly CommandAction[],
+): { heading: string | undefined; items: CommandAction[] }[] {
     const groups: {
         heading: string | undefined
-        items: CommandDefinition[]
+        items: CommandAction[]
     }[] = []
     const seen = new Map<string | undefined, number>()
 
-    for (const cmd of commands) {
-        const key = cmd.group
+    for (const action of actions) {
+        const key = action.group
         const idx = seen.get(key)
         if (idx !== undefined) {
-            groups[idx]!.items.push(cmd)
+            groups[idx]!.items.push(action)
         } else {
             seen.set(key, groups.length)
-            groups.push({ heading: key, items: [cmd] })
+            groups.push({ heading: key, items: [action] })
         }
     }
 
@@ -954,34 +1005,46 @@ function groupCommands(
 }
 
 /**
- * Internal component that renders a CommandDefinition[] as grouped CommandItems.
+ * Internal component that renders a CommandAction[] as grouped CommandItems.
  */
-function CommandListFromDefinitions({
-    commands,
+function ActionListFromActions({
+    actions,
     placeholder,
     askAILabel,
 }: {
-    commands: CommandDefinition[]
+    actions: readonly CommandAction[]
     placeholder: string
     askAILabel: string
 }) {
     // Dev-mode duplicate name detection
     if (process.env.NODE_ENV !== "production") {
         const names = new Set<string>()
-        for (const cmd of commands) {
-            if (names.has(cmd.name)) {
+        const semanticKeys = new Map<string, string>()
+        for (const action of actions) {
+            if (names.has(action.name)) {
                 console.warn(
-                    `[CommandMenu] Duplicate command name "${cmd.name}" in commands prop. Names must be unique.`,
+                    `[CommandMenu] Duplicate action name "${action.name}" in actions prop. Names must be unique.`,
                 )
             }
-            names.add(cmd.name)
+            names.add(action.name)
+
+            const key = action.semanticKey ?? action.name
+            const existing = semanticKeys.get(key)
+            if (existing && existing !== action.name) {
+                console.warn(
+                    `[CommandMenu] Action overlap detected for semantic key "${key}" between "${existing}" and "${action.name}". Keep one canonical action per operation.`,
+                )
+            } else {
+                semanticKeys.set(key, action.name)
+            }
         }
     }
 
     const { inputValue, mode } = useCommandMenuContext()
+    const handleActionSelect = useActionSelectionHandler()
     const { isMobile, layout, showQuickActions, quickActionsCount } =
         useMobileUIContext()
-    const grouped = groupCommands(commands)
+    const grouped = groupActions(actions)
     const showQuickActionsGroup =
         isMobile &&
         layout === "keyboard-last" &&
@@ -990,32 +1053,29 @@ function CommandListFromDefinitions({
         inputValue.length === 0
 
     const quickActions = showQuickActionsGroup
-        ? commands.filter((cmd) => !cmd.disabled).slice(0, quickActionsCount)
+        ? actions
+              .filter((action) => isCommandLikeAction(action) && !action.disabled)
+              .slice(0, quickActionsCount)
         : []
 
-    const quickActionSet = new Set(quickActions.map((cmd) => cmd.name))
+    const quickActionSet = new Set(quickActions.map((action) => action.name))
 
-    const renderCommandItem = (cmd: CommandDefinition) => {
-        const label = cmd.label ?? cmd.name
-        // Merge keywords: include label (if different from name) plus explicit keywords
-        const allKeywords: string[] = [...(cmd.keywords ?? [])]
-        if (cmd.label && cmd.label !== cmd.name) {
-            allKeywords.push(cmd.label)
-        }
+    const renderActionItem = (action: CommandAction) => {
+        const label = getActionLabel(action)
 
         return (
             <CommandItem
-                key={cmd.name}
-                value={cmd.name}
-                keywords={allKeywords.length > 0 ? allKeywords : undefined}
-                disabled={cmd.disabled}
-                onSelect={() => cmd.onSelect?.()}
+                key={action.name}
+                value={action.name}
+                keywords={getActionKeywords(action)}
+                disabled={action.disabled}
+                onSelect={() => handleActionSelect(action)}
                 className={cn(isMobile && "min-h-12 py-3")}
             >
-                {cmd.icon}
+                {action.icon}
                 {label}
-                {cmd.shortcut && !isMobile && (
-                    <CommandShortcut>{cmd.shortcut}</CommandShortcut>
+                {action.shortcut && !isMobile && (
+                    <CommandShortcut>{action.shortcut}</CommandShortcut>
                 )}
             </CommandItem>
         )
@@ -1027,19 +1087,23 @@ function CommandListFromDefinitions({
             <CommandList>
                 {showQuickActionsGroup && quickActions.length > 0 && (
                     <CommandGroup heading="Quick Actions">
-                        {quickActions.map((cmd) => renderCommandItem(cmd))}
+                        {quickActions.map((action) => renderActionItem(action))}
                     </CommandGroup>
                 )}
                 {grouped.map((group, gi) => {
                     const visibleItems = showQuickActionsGroup
-                        ? group.items.filter((cmd) => !quickActionSet.has(cmd.name))
+                        ? group.items.filter(
+                              (action) => !quickActionSet.has(action.name),
+                          )
                         : group.items
 
                     if (visibleItems.length === 0) {
                         return null
                     }
 
-                    const items = visibleItems.map((cmd) => renderCommandItem(cmd))
+                    const items = visibleItems.map((action) =>
+                        renderActionItem(action),
+                    )
 
                     if (group.heading) {
                         return (
@@ -1086,14 +1150,13 @@ function CommandList({
         messages,
         sendMessage,
         addToolApprovalResponse,
-        agenticActions,
-        switchToChat,
-        startNewChat,
+        actions: contextActions,
         conversations,
         loadConversation,
         inputValue,
     } = useCommandMenuContext()
     const { isMobile, layout, keyboardInset } = useMobileUIContext()
+    const handleActionSelect = useActionSelectionHandler()
 
     const stableSendMessage = React.useCallback(
         (msg: { text: string }) => sendMessage(msg.text),
@@ -1157,15 +1220,7 @@ function CommandList({
         }
     })
 
-    const resolvedActions = actions ?? agenticActions
-    const executableActions = resolvedActions?.filter((a) => a.execute)
-
-    const handleActionSelect = (action: CommandAction) => {
-        const label = action.label ?? action.name
-        startNewChat()
-        switchToChat()
-        sendMessage(label)
-    }
+    const resolvedActions = actions ?? contextActions
 
     const showList =
         inputValue.length > 0 || (isMobile && layout === "keyboard-last")
@@ -1221,16 +1276,22 @@ function CommandList({
                         ))}
                     </CommandGroup>
                 )}
-                {executableActions && executableActions.length > 0 && (
+                {resolvedActions && resolvedActions.length > 0 && (
                     <CommandGroup heading={actionsHeading}>
-                        {executableActions.map((action) => (
+                        {resolvedActions.map((action) => (
                             <CommandItem
                                 key={action.name}
-                                value={action.label ?? action.name}
+                                value={getActionLabel(action)}
+                                keywords={getActionKeywords(action)}
+                                disabled={action.disabled}
                                 onSelect={() => handleActionSelect(action)}
                                 className={cn(isMobile && "min-h-12 py-3")}
                             >
-                                {action.label ?? action.name}
+                                {action.icon}
+                                {getActionLabel(action)}
+                                {action.shortcut && !isMobile && (
+                                    <CommandShortcut>{action.shortcut}</CommandShortcut>
+                                )}
                             </CommandItem>
                         ))}
                     </CommandGroup>

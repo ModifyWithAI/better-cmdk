@@ -724,7 +724,7 @@ function CommandInput({
                 onValueChange={setInputValue}
                 onKeyDown={handleKeyDown}
                 className={cn(
-                    "placeholder:text-muted-foreground flex h-10 w-full bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+                    "placeholder:text-muted-foreground flex h-10 w-full appearance-none border-0 bg-transparent py-3 text-sm shadow-none outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
                     className,
                 )}
                 {...inputProps}

@@ -560,6 +560,15 @@ Unused fields are safe: each library should ignore values it doesn't need.
 
 **Coverage first, count second.** Many non-trivial apps should land in the 10-30+ no-argument command-action range. If you have fewer than 8, you likely missed meaningful command flows.
 
+### Label distinctiveness for mixed arrays
+
+When navigation and data actions share the same domain concept, make labels clearly distinct:
+
+- Navigation: "Out of Office" (navigates to the page)
+- Data: "Create Out of Office Entry" (creates via API)
+
+Prefix data-action labels with their verb ("Create …", "Update …", "Delete …") to disambiguate from navigation labels.
+
 ---
 
 ## Step 5: Create the component
@@ -641,6 +650,7 @@ const assistant = useAssistant({
   actions,
   getContext: () => ({
     currentPage: window.location.pathname,
+    currentDateTime: new Date().toISOString(),
   }),
 })
 

@@ -913,19 +913,12 @@ export interface CommandAction {
     disabled?: boolean
     /** Called when the action is selected directly */
     onSelect?: () => void
-    /**
-     * Structured input schema for argument-requiring actions.
-     * Actions without `inputSchema` are treated as command-like.
-     */
-    inputSchema?: Partial<Record<string, CommandActionOption>>
-    /** Whether this action requires approval before execution. */
-    approvalRequired?: boolean
     /** Action execution callback. */
     execute: CommandActionExecuteHandler<Record<string, unknown>>
 }
 
 function isCommandLikeAction(action: CommandAction): boolean {
-    return action.inputSchema == null
+    return !("inputSchema" in action)
 }
 
 function getActionLabel(action: CommandAction): string {
@@ -948,13 +941,15 @@ function useActionSelectionHandler() {
 
     return React.useCallback(
         (action: CommandAction) => {
+            const isCommand = isCommandLikeAction(action)
+
             const routeToChat = () => {
                 startNewChat()
                 switchToChat()
                 void sendMessage(getActionLabel(action))
             }
 
-            if (!isCommandLikeAction(action)) {
+            if (!isCommand) {
                 routeToChat()
                 return
             }
@@ -1062,6 +1057,7 @@ function ActionListFromActions({
 
     const renderActionItem = (action: CommandAction) => {
         const label = getActionLabel(action)
+        const isCommand = isCommandLikeAction(action)
 
         return (
             <CommandItem
@@ -1069,6 +1065,7 @@ function ActionListFromActions({
                 value={action.name}
                 keywords={getActionKeywords(action)}
                 disabled={action.disabled}
+                closeOnSelect={isCommand}
                 onSelect={() => handleActionSelect(action)}
                 className={cn(isMobile && "min-h-12 py-3")}
             >
@@ -1150,7 +1147,6 @@ function CommandList({
         messages,
         sendMessage,
         addToolApprovalResponse,
-        actions: contextActions,
         conversations,
         loadConversation,
         inputValue,
@@ -1220,7 +1216,7 @@ function CommandList({
         }
     })
 
-    const resolvedActions = actions ?? contextActions
+    const resolvedActions = actions
 
     const showList =
         inputValue.length > 0 || (isMobile && layout === "keyboard-last")
@@ -1265,6 +1261,7 @@ function CommandList({
                                 value={`chat-history-${convo.id}`}
                                 keywords={[convo.title]}
                                 onSelect={() => loadConversation(convo.id)}
+                                closeOnSelect={false}
                                 className={cn(isMobile && "min-h-12 py-3")}
                             >
                                 <MessageCircleIcon className="size-4" />
@@ -1284,6 +1281,7 @@ function CommandList({
                                 value={getActionLabel(action)}
                                 keywords={getActionKeywords(action)}
                                 disabled={action.disabled}
+                                closeOnSelect={isCommandLikeAction(action)}
                                 onSelect={() => handleActionSelect(action)}
                                 className={cn(isMobile && "min-h-12 py-3")}
                             >

@@ -380,19 +380,19 @@ Do NOT assume answers to any questions.`;
             <button
               type="button"
               onClick={toggleTheme}
-              className="inline-flex h-10 items-center gap-2 border-2 border-foreground bg-card px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5"
+              className="inline-flex h-8 items-center gap-2 border-2 border-foreground bg-card px-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5 sm:h-10 sm:px-3"
             >
               <Sun className="size-3.5 dark:hidden" />
               <Moon className="hidden size-3.5 dark:block" />
-              <span className="dark:hidden">Dark</span>
-              <span className="hidden dark:block">Light</span>
+              <span className="hidden sm:inline sm:dark:hidden">Dark</span>
+              <span className="hidden sm:dark:inline">Light</span>
             </button>
 
             <Link
               href="https://github.com/ModifyWithAI/better-cmdk"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-10 items-center gap-2 border-2 border-foreground bg-card px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5"
+              className="inline-flex h-8 items-center gap-2 border-2 border-foreground bg-card px-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5 sm:h-10 sm:px-3"
             >
               <Github className="size-3.5" />
               GitHub
@@ -402,16 +402,16 @@ Do NOT assume answers to any questions.`;
               href="https://better-cmdk.com/docs"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-10 items-center gap-2 border-2 border-foreground bg-card px-3 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5"
+              className="inline-flex h-8 items-center gap-2 border-2 border-foreground bg-card px-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5 sm:h-10 sm:px-3"
             >
               <BookOpen className="size-3.5" />
-              Docs
+              <span className="hidden sm:inline">Docs</span>
             </a>
 
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="inline-flex h-10 items-center gap-2 border-2 border-foreground bg-foreground px-3 font-mono text-[11px] uppercase tracking-[0.14em] text-background transition-transform hover:-translate-y-0.5"
+              className="inline-flex h-8 items-center gap-2 border-2 border-foreground bg-foreground px-2 font-mono text-[11px] uppercase tracking-[0.14em] text-background transition-transform hover:-translate-y-0.5 sm:h-10 sm:px-3"
             >
               <Search className="size-3.5" />
               Demo

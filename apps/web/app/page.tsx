@@ -388,16 +388,6 @@ Do NOT assume answers to any questions.`;
               <span className="hidden sm:dark:inline">Light</span>
             </button>
 
-            <Link
-              href="https://github.com/ModifyWithAI/better-cmdk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-8 items-center gap-2 border-2 border-foreground bg-card px-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5 sm:h-10 sm:px-3"
-            >
-              <Github className="size-3.5" />
-              GitHub
-            </Link>
-
             <a
               href="https://better-cmdk.com/docs"
               target="_blank"
@@ -407,6 +397,16 @@ Do NOT assume answers to any questions.`;
               <BookOpen className="size-3.5" />
               <span className="hidden sm:inline">Docs</span>
             </a>
+
+            <Link
+              href="https://github.com/ModifyWithAI/better-cmdk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-8 items-center gap-2 border-2 border-foreground bg-card px-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5 sm:h-10 sm:px-3"
+            >
+              <Github className="size-3.5" />
+              GitHub
+            </Link>
 
             <button
               type="button"

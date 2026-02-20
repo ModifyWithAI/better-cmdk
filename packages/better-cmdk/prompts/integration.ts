@@ -651,6 +651,14 @@ const assistant = useAssistant({
   getContext: () => ({
     currentPage: window.location.pathname,
     currentDateTime: new Date().toISOString(),
+    // Pass as much app data as possible — reuse existing cached queries.
+    // The AI can only help with what it can see. Include:
+    // - User profile (name, email, timezone, role, preferences)
+    // - Core entities (projects, items, orders — whatever your app manages)
+    // - Recent activity (upcoming events, notifications, recent changes)
+    // - Connected accounts (integrations, linked services)
+    // - Settings (theme, defaults, feature flags)
+    // See modifywithai's AGENTS.md Step 5b for a full context discovery guide.
   }),
 })
 
@@ -661,6 +669,8 @@ const assistant = useAssistant({
   chat={assistant}
 />
 \`\`\`
+
+**Context richness matters.** The AI can only answer questions about data it receives via \`getContext\`. Passing just \`currentPage\` means the AI can't answer "what are my projects?" or "who's on my team?" Reuse your app's existing data-fetching hooks (React Query, tRPC, SWR) — they're already cached client-side, so this adds zero extra network requests. Aim for 5-15 data categories covering user profile, core entities, recent activity, connected accounts, and settings.
 
 ---
 

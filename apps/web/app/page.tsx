@@ -395,7 +395,7 @@ Do NOT assume answers to any questions.`;
               className="inline-flex h-8 items-center gap-2 border-2 border-foreground bg-card px-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-transform hover:-translate-y-0.5 sm:h-10 sm:px-3"
             >
               <Github className="size-3.5" />
-              GitHub
+              <span className="hidden sm:inline">GitHub</span>
             </Link>
 
             <a

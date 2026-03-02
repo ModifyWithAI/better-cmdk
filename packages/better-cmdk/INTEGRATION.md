@@ -409,6 +409,7 @@ type CommandMenuMobileOptions = {
   enabled?: boolean // default: true
   breakpoint?: number // default: 900
   layout?: "keyboard-last" // default: "keyboard-last"
+  showGestureHint?: boolean // default: true
   gesture?: false | {
     enabled?: boolean // default: true
     holdMs?: number // default: 350
@@ -419,7 +420,8 @@ type CommandMenuMobileOptions = {
 }
 ```
 
-Gesture behavior uses a lower-right activation zone by default: hold, then swipe up to open.
+Gesture behavior is enabled by default and uses a lower-right activation zone: hold, then swipe up to open.
+The library also shows a subtle built-in corner hint until the menu is opened once on mobile.
 
 ### CommandInput
 

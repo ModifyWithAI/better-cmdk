@@ -40,6 +40,7 @@ import {
 } from "./dialog"
 import { TelemetryErrorBoundary } from "./telemetry-error-boundary"
 import { useMobileCommandGesture } from "../../hooks/use-mobile-command-gesture"
+import { useMobileGestureHint } from "../../hooks/use-mobile-gesture-hint"
 import { useVisualViewportInset } from "../../hooks/use-visual-viewport-inset"
 
 const noopApproval = (_r: { id: string; approved: boolean }) => {}
@@ -82,6 +83,8 @@ export interface CommandMenuMobileOptions {
     layout?: CommandMenuMobileLayout
     /** Gesture trigger settings. Set false to fully disable. */
     gesture?: CommandMenuMobileGesture | false
+    /** Show the subtle idle gesture hint in the lower-right corner. Defaults to true. */
+    showGestureHint?: boolean
     /** Show quick actions when query is empty. */
     showQuickActions?: boolean
     /** Maximum quick actions to show. */
@@ -97,6 +100,7 @@ interface ResolvedMobileConfig {
         holdMs: number
         swipeUpPx: number
     }
+    showGestureHint: boolean
     showQuickActions: boolean
     quickActionsCount: number
 }
@@ -144,6 +148,7 @@ function resolveMobileConfig(mobile?: CommandMenuMobileOptions): ResolvedMobileC
                 ? (gestureOptions?.swipeUpPx ?? 56)
                 : 56,
         },
+        showGestureHint: mobile?.showGestureHint ?? true,
         showQuickActions: mobile?.showQuickActions ?? true,
         quickActionsCount: mobile?.quickActionsCount ?? 4,
     }
@@ -453,6 +458,10 @@ function CommandMenuInner({
         mobileConfig.enabled,
     )
     const isMobileSheet = mobileConfig.enabled && isLikelyMobile
+    const canUseGestureTrigger =
+        isMobileSheet &&
+        Boolean(props.onOpenChange) &&
+        mobileConfig.gesture.enabled
     const keyboardInset = useVisualViewportInset(isMobileSheet && !!props.open)
 
     const handleOpenChange = React.useCallback(
@@ -468,14 +477,19 @@ function CommandMenuInner({
 
     const gesture = useMobileCommandGesture({
         enabled:
-            isMobileSheet &&
-            !props.open &&
-            Boolean(props.onOpenChange) &&
-            mobileConfig.gesture.enabled,
+            canUseGestureTrigger &&
+            !props.open,
         open: Boolean(props.open),
         holdMs: mobileConfig.gesture.holdMs,
         swipeUpPx: mobileConfig.gesture.swipeUpPx,
         onTrigger: handleGestureTrigger,
+    })
+    const showIdleGestureHint = useMobileGestureHint({
+        isMobile: isMobileSheet,
+        open: Boolean(props.open),
+        gestureEnabled: canUseGestureTrigger,
+        showGestureHint: mobileConfig.showGestureHint,
+        showSwipeHint: gesture.showHint,
     })
 
     const mobileUI = React.useMemo<MobileUIContextValue>(
@@ -593,6 +607,25 @@ function CommandMenuInner({
                     </MobileUIContext.Provider>
                 </CommandContent>
             </Dialog>
+            {showIdleGestureHint && (
+                <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="pointer-events-none fixed z-40 flex items-center gap-1.5 rounded-full border border-border/70 bg-background/82 px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground shadow-sm backdrop-blur-sm"
+                    style={{
+                        right: "calc(env(safe-area-inset-right) + 1rem)",
+                        bottom: "calc(env(safe-area-inset-bottom) + 1rem)",
+                    }}
+                    aria-hidden="true"
+                    data-cmdk-mobile-gesture-ignore
+                >
+                    <span className="flex size-4 items-center justify-center rounded-full bg-foreground/6 text-foreground/70">
+                        <ArrowUpIcon className="size-3" />
+                    </span>
+                    Hold + swipe
+                </motion.div>
+            )}
             {gesture.showHint && (
                 <div
                     className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-input bg-background/95 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-md"

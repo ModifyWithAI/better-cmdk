@@ -171,6 +171,8 @@ If a shared standard `actions` array already exists, extend it in place instead 
 
 `CommandMenu` now includes a mobile-first sheet mode:
 
+- Mobile gesture is enabled by default with no extra setup beyond controlled `open` / `onOpenChange`
+- A subtle lower-right hint advertises the touch area until the menu is opened once on mobile
 - Long-press (`~350ms`) in the lower-right viewport shows a hint: `Swipe up for Command Menu`
 - Swipe up opens the menu
 - Keyboard-last flow on mobile (sheet opens without forcing keyboard)
@@ -184,6 +186,7 @@ If a shared standard `actions` array already exists, extend it in place instead 
   mobile={{
     enabled: true,
     layout: "keyboard-last",
+    showGestureHint: true,
     gesture: {
       holdMs: 350,
       swipeUpPx: 56,
@@ -193,6 +196,9 @@ If a shared standard `actions` array already exists, extend it in place instead 
   }}
 />
 ```
+
+Disable only the idle corner affordance with `mobile={{ showGestureHint: false }}`.
+Disable the gesture entirely with `mobile={{ gesture: false }}`.
 
 ### AI Chat
 

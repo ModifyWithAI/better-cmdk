@@ -1214,7 +1214,7 @@ function CommandList({
                                 addToolApprovalResponse={stableApproval}
                             />
                         </div>
-                        {status === "streaming" && <ChatLoading />}
+                        {status === "submitted" && <ChatLoading />}
                     </ChatMessageList>
                 )}
             </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import type { UIMessage } from "ai"
-import { LoaderIcon } from "lucide-react"
+
 import * as React from "react"
 import { cn } from "../../lib/utils"
 
@@ -89,13 +89,22 @@ function ChatLoading({
         <div
             data-slot="chat-loading"
             className={cn(
-                "flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground",
+                "flex items-center gap-1.5 px-3 py-2",
                 className,
             )}
             {...props}
         >
-            <LoaderIcon className="size-4 animate-spin" />
-            <span>{text}</span>
+            <span className="sr-only">{text}</span>
+            {[0, 1, 2].map((i) => (
+                <span
+                    key={i}
+                    className="size-1.5 rounded-full bg-foreground/50"
+                    style={{
+                        animation: "bcmdk-bounce 1.2s ease-in-out infinite",
+                        animationDelay: `${i * 0.15}s`,
+                    }}
+                />
+            ))}
         </div>
     )
 }

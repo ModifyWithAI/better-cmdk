@@ -121,3 +121,16 @@
 .bcmdk-root .slide-out-to-top-2 {
     --bcmdk-exit-y: -0.5rem;
 }
+
+@keyframes bcmdk-bounce {
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    30% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}

@@ -81,7 +81,4 @@ export default defineDocs({
 		description: docsSite.description,
 		twitterCard: "summary_large_image",
 	},
-	og: {
-		defaultImage: `${docsSite.url}/opengraph-image`,
-	},
 });

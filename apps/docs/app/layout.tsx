@@ -12,28 +12,11 @@ export const metadata: Metadata = {
 		template: docsConfig.metadata?.titleTemplate ?? "%s | better-cmdk Docs",
 	},
 	description: docsSite.description,
-	alternates: {
-		canonical: "/docs",
-	},
 	keywords: docsSite.keywords,
 	icons: {
 		icon: "/icon.svg",
 		shortcut: "/icon.svg",
 		apple: "/icon.svg",
-	},
-	openGraph: {
-		type: "website",
-		url: "/docs",
-		siteName: docsSite.title,
-		title: docsSite.title,
-		description: docsSite.description,
-		images: ["/opengraph-image"],
-	},
-	twitter: {
-		card: "summary_large_image",
-		title: docsSite.title,
-		description: docsSite.description,
-		images: ["/twitter-image"],
 	},
 };
 

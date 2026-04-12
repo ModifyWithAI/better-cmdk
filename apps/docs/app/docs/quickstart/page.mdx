@@ -1,0 +1,190 @@
+---
+title: "Quickstart"
+description: "Install better-cmdk, import the styles, and launch your first AI-native command menu."
+icon: "rocket"
+order: 2
+---
+
+> React 18+ and Tailwind CSS v4 are required. Built-in AI chat works out of the box through `https://better-cmdk.com/api/chat` as a free developer trial service.
+
+## Install
+
+```bash
+npm install better-cmdk
+```
+
+```bash
+pnpm add better-cmdk
+```
+
+```bash
+bun add better-cmdk
+```
+
+Install peer dependencies if your app does not already include them:
+
+```bash
+npm install react react-dom tailwindcss
+```
+
+## Import styles
+
+In your global CSS file:
+
+```css
+@import "tailwindcss";
+@import "better-cmdk";
+```
+
+Optional token overrides can be scoped under `.bcmdk-root`:
+
+```css
+.bcmdk-root {
+	--bcmdk-radius: 0.625rem;
+	--bcmdk-primary: 0.205 0 0;
+	--bcmdk-primary-foreground: 0.985 0 0;
+	--bcmdk-border: 0.922 0 0;
+}
+```
+
+## Define one actions array
+
+Start with one `actions` array. `CommandMenu` uses hosted AI chat by default, so you can validate the full interaction model before wiring your own backend.
+
+```tsx
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { CommandMenu, type CommandAction } from "better-cmdk";
+import { LayoutDashboardIcon, SettingsIcon } from "lucide-react";
+
+export function CommandPalette() {
+	const [open, setOpen] = useState(false);
+	const router = useRouter();
+
+	const actions: CommandAction[] = [
+		{
+			name: "go-dashboard",
+			label: "Go to Dashboard",
+			description: "Navigate to the dashboard page",
+			group: "Navigation",
+			icon: <LayoutDashboardIcon className="size-4" />,
+			execute: () => router.push("/dashboard"),
+		},
+		{
+			name: "open-settings",
+			label: "Open Settings",
+			description: "Navigate to the settings page",
+			group: "Navigation",
+			icon: <SettingsIcon className="size-4" />,
+			shortcut: "⌘,",
+			execute: () => router.push("/settings"),
+		},
+		{
+			name: "navigate-to",
+			label: "Navigate to page",
+			description: "Navigate to a specific route in the app",
+			group: "Navigation",
+			inputSchema: {
+				path: {
+					type: "string",
+					description: "Destination path",
+					required: true,
+				},
+			},
+			execute: ({ path }) => router.push(String(path)),
+		},
+	];
+
+	return (
+		<>
+			<button onClick={() => setOpen(true)}>Open palette</button>
+			<CommandMenu open={open} onOpenChange={setOpen} actions={actions} />
+		</>
+	);
+}
+```
+
+Hosted chat is enabled by default through `https://better-cmdk.com/api/chat`, so you can test quickly. The hosted endpoint is rate-limited and intended for development, so production apps should use their own `chatEndpoint` or connect an external agent.
+
+## Optional: use your own AI endpoint
+
+Install the AI SDK packages:
+
+```bash
+npm install ai @ai-sdk/react @ai-sdk/openai
+```
+
+Add a streaming chat endpoint. This example uses Next.js:
+
+```ts
+// app/api/chat/route.ts
+import { openai } from "@ai-sdk/openai";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
+
+export async function POST(request: Request) {
+	const { messages }: { messages: UIMessage[] } = await request.json();
+
+	const result = streamText({
+		model: openai("gpt-4o-mini"),
+		messages: await convertToModelMessages(messages),
+		system: "You are a helpful assistant in a command palette.",
+	});
+
+	return result.toUIMessageStreamResponse();
+}
+```
+
+Point `CommandMenu` to that route:
+
+```tsx
+<CommandMenu
+	open={open}
+	onOpenChange={setOpen}
+	actions={actions}
+	chatEndpoint="/api/chat"
+/>;
+```
+
+## Optional: connect ModifyWithAI
+
+Install the packages:
+
+```bash
+bun add modifywithai ai @ai-sdk/react
+```
+
+Create a token endpoint:
+
+```ts
+// app/api/mwai/token/route.ts
+import { createAssistantTokenHandler } from "modifywithai/nextjs";
+
+export const POST = createAssistantTokenHandler({
+	appId: process.env.MWAI_APP_ID!,
+});
+```
+
+Reuse the same `actions` array with `useAssistant()`:
+
+```tsx
+import { useAssistant } from "modifywithai";
+
+const assistant = useAssistant({
+	tokenEndpoint: "/api/mwai/token",
+	actions,
+});
+
+<CommandMenu
+	open={open}
+	onOpenChange={setOpen}
+	actions={actions}
+	chat={assistant}
+/>;
+```
+
+## Next steps
+
+- Use [Extending](/docs/extending) to refine action quality, approvals, and custom rendering.
+- Visit [ModifyWithAI docs](https://modifywithai.com/docs) if you want agent-managed workflows.

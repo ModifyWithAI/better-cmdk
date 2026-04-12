@@ -1,0 +1,58 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "@farming-labs/theme/command-grid/css";
+
+:root {
+	--font-bebas: "Bebas Neue", Impact, sans-serif;
+	--fd-font-sans: "IBM Plex Mono", "Geist Mono", ui-monospace, monospace;
+	--fd-font-mono: "IBM Plex Mono", "Geist Mono", ui-monospace, monospace;
+}
+
+html,
+body {
+	min-height: 100%;
+}
+
+body {
+	font-family: "IBM Plex Mono", "Geist Mono", ui-monospace, monospace;
+	text-rendering: geometricPrecision;
+}
+
+.docs-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.7rem;
+}
+
+.docs-brand-mark {
+	flex-shrink: 0;
+	border: 2px solid var(--color-fd-border);
+	background: var(--color-fd-foreground);
+}
+
+.docs-brand-copy {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	font-family: "IBM Plex Mono", "Geist Mono", ui-monospace, monospace;
+	text-transform: uppercase;
+}
+
+.docs-brand-name {
+	letter-spacing: 0.11em;
+	font-size: 0.8rem;
+	color: var(--color-fd-foreground);
+}
+
+.docs-brand-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.15rem 0.4rem;
+	border: 2px solid var(--color-fd-border);
+	background: var(--color-fd-foreground);
+	color: var(--color-fd-background);
+	font-size: 0.68rem;
+	letter-spacing: 0.14em;
+	line-height: 1;
+}

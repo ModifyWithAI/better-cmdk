@@ -1,0 +1,79 @@
+---
+title: "Introduction"
+description: "Meet better-cmdk's shared action model, chat modes, and docs navigation."
+icon: "book"
+order: 1
+---
+
+`better-cmdk` is a React command palette with built-in AI chat, approval flows, and a shared `CommandAction` model you can reuse across your UI and external agents.
+
+## Three ways to use it
+
+| Mode | Use when | What you pass |
+| --- | --- | --- |
+| Command palette only | You want search, shortcuts, and custom actions without AI | `actions` |
+| Hosted chat | You want a fast way to test AI chat during development | `actions` |
+| External agent | You want approvals, tool execution, and agent-managed workflows | `actions` and `chat` |
+
+Hosted chat uses `https://better-cmdk.com/api/chat` by default as a developer trial service. It is great for fast evaluation, but production apps should point `chatEndpoint` at their own API route or connect an external agent provider.
+
+## The core idea: one actions array
+
+Define one `CommandAction[]` list and reuse it everywhere.
+
+- `better-cmdk` uses UI-facing fields such as `label`, `group`, `icon`, `shortcut`, and `keywords`.
+- Agent providers use execution-facing fields such as `description`, `inputSchema`, `approvalRequired`, and `execute`.
+- Each integration ignores the fields it does not need.
+
+```tsx
+import { CommandMenu, type CommandAction } from "better-cmdk";
+import { SettingsIcon } from "lucide-react";
+
+const actions: CommandAction[] = [
+	{
+		name: "open-settings",
+		label: "Open Settings",
+		description: "Navigate to the settings page",
+		group: "Navigation",
+		icon: <SettingsIcon className="size-4" />,
+		shortcut: "⌘,",
+		execute: () => router.push("/settings"),
+	},
+	{
+		name: "navigate-to",
+		label: "Navigate to page",
+		description: "Navigate to a specific route in the app",
+		inputSchema: {
+			path: {
+				type: "string",
+				description: "Destination path",
+				required: true,
+			},
+		},
+		execute: ({ path }) => router.push(String(path)),
+	},
+];
+
+<CommandMenu open={open} onOpenChange={setOpen} actions={actions} />;
+```
+
+## How action execution works
+
+| Action kind | Condition | Selection behavior |
+| --- | --- | --- |
+| Command-like | No `inputSchema` | Executes directly from command mode |
+| Argument-requiring | Has `inputSchema` | Routes through chat so the AI can gather arguments |
+
+Keep one entry per real operation. Do not duplicate the same operation as both a plain command and an AI tool.
+
+## What ships out of the box
+
+- A single UI for command search and chat mode.
+- Built-in approval components for sensitive actions.
+- Compatibility with the same `CommandAction` shape used by external agent providers.
+- Composable primitives when you want to drop down from the high-level `actions` API.
+
+## Start here
+
+- Read [Quickstart](/docs/quickstart) to ship a working palette quickly.
+- Read [Extending](/docs/extending) for action design rules, approvals, history, and theming.

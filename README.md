@@ -4,7 +4,7 @@ This repository is a Turborepo containing:
 
 - `packages/better-cmdk`: the publishable `better-cmdk` package
 - `apps/web`: the Next.js website/demo app
-- `apps/docs`: the Mintlify documentation app
+- `apps/docs`: the Next.js documentation app powered by `@farming-labs/docs`
 
 ## Scripts
 

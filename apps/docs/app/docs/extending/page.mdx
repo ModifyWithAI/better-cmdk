@@ -1,0 +1,207 @@
+---
+title: "Extending"
+description: "Design strong actions, customize rendering, and wire approvals and history correctly."
+icon: "sliders"
+order: 3
+---
+
+## Action design rules
+
+Use these rules to keep behavior predictable across `better-cmdk` and external agent providers:
+
+1. Define one canonical `actions: CommandAction[]` array.
+2. Use one action per underlying operation.
+3. Write specific `description` text so AI routing is reliable.
+4. Add `inputSchema` only when the action truly needs arguments.
+5. Mark sensitive operations with `approvalRequired: true`.
+
+If a field is irrelevant to a given integration, that integration ignores it.
+
+## `CommandAction` reference
+
+| Field | Type | Required | Used by |
+| --- | --- | --- | --- |
+| `name` | `string` | Yes | both |
+| `description` | `string` | Yes | both |
+| `execute` | `(options: Record<string, unknown>) => void` | Yes | both |
+| `label` | `string` | No | better-cmdk |
+| `group` | `string` | No | better-cmdk |
+| `icon` | `ReactNode` | No | better-cmdk |
+| `shortcut` | `string` | No | better-cmdk |
+| `keywords` | `string[]` | No | better-cmdk |
+| `semanticKey` | `string` | No | both |
+| `disabled` | `boolean` | No | better-cmdk |
+| `onSelect` | `() => void` | No | better-cmdk |
+| `inputSchema` | `Record<string, { type; description?; required? }>` | No | both |
+| `approvalRequired` | `boolean` | No | agent providers |
+
+## Quality examples
+
+Good:
+
+```tsx
+{
+	name: "archive-project",
+	label: "Archive project",
+	description: "Move a project to the archive list. The project can be restored later.",
+	group: "Projects",
+	approvalRequired: true,
+	execute: ({ projectId }) => archiveProject(String(projectId)),
+	inputSchema: {
+		projectId: {
+			type: "string",
+			description: "ID of the project to archive",
+			required: true,
+		},
+	},
+}
+```
+
+Bad:
+
+```tsx
+{
+	name: "archive",
+	description: "Archive project",
+	execute: () => {},
+	// Too vague for AI routing.
+	// Missing schema for required arguments.
+	// No approval guard for a potentially destructive action.
+}
+```
+
+## Command-like vs argument-requiring
+
+| Action kind | Definition | Direct select behavior |
+| --- | --- | --- |
+| Command-like | No `inputSchema` | Calls `onSelect` or `execute({})` |
+| Argument-requiring | Has `inputSchema` | Routes into chat so arguments can be gathered |
+
+Do not create both forms for the same operation.
+
+## Reuse the same array with ModifyWithAI
+
+```tsx
+import { CommandMenu, type CommandAction } from "better-cmdk";
+import { useAssistant } from "modifywithai";
+
+const actions: CommandAction[] = [
+	{
+		name: "toggle-dark-mode",
+		label: "Toggle dark mode",
+		description: "Toggle between light and dark theme",
+		group: "Appearance",
+		execute: () => document.documentElement.classList.toggle("dark"),
+	},
+	{
+		name: "navigate-to",
+		label: "Navigate to page",
+		description: "Navigate to a specific path in the app",
+		inputSchema: {
+			path: {
+				type: "string",
+				description: "Destination path",
+				required: true,
+			},
+		},
+		execute: ({ path }) => router.push(String(path)),
+	},
+];
+
+const assistant = useAssistant({
+	tokenEndpoint: "/api/mwai/token",
+	actions,
+});
+
+<CommandMenu open={open} onOpenChange={setOpen} actions={actions} chat={assistant} />;
+```
+
+## Custom rendering
+
+Use the composition API when you need full control over the command UI:
+
+```tsx
+import {
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandList,
+	CommandMenu,
+	CommandShortcut,
+} from "better-cmdk";
+
+<CommandMenu open={open} onOpenChange={setOpen}>
+	{({ mode }) => (
+		<>
+			<CommandInput
+				placeholder={mode === "chat" ? "Ask AI..." : "Search actions..."}
+				showSendButton
+			/>
+			<CommandList>
+				<CommandGroup heading="Navigation">
+					<CommandItem onSelect={() => router.push("/dashboard")}>
+						Go to Dashboard
+						<CommandShortcut>⌘D</CommandShortcut>
+					</CommandItem>
+				</CommandGroup>
+				<CommandEmpty />
+			</CommandList>
+		</>
+	)}
+</CommandMenu>;
+```
+
+When `actions` and `children` are both provided, `actions` takes precedence.
+
+## Approval workflow
+
+For external agents, actions marked with `approvalRequired` can be gated by user confirmation:
+
+1. The agent requests execution of one or more actions.
+2. The UI asks the user to approve or deny.
+3. Your app sends the decision with `addToolApprovalResponse`.
+
+```tsx
+const { addToolApprovalResponse } = useCommandMenuContext();
+
+function approve(id: string) {
+	addToolApprovalResponse?.({ id, approved: true });
+}
+
+function deny(id: string) {
+	addToolApprovalResponse?.({ id, approved: false });
+}
+```
+
+## Context and history hooks
+
+`useCommandMenuContext()` exposes runtime state such as `mode`, `messages`, `status`, `sendMessage`, `switchToChat`, and `switchToCommand`.
+
+Use `historyStorageKey` and `maxConversations` on `CommandMenu` to control persisted chat history:
+
+```tsx
+<CommandMenu
+	open={open}
+	onOpenChange={setOpen}
+	actions={actions}
+	historyStorageKey="my-app-command-history"
+	maxConversations={20}
+/>;
+```
+
+## Theming and styling
+
+Customize the built-in tokens on `.bcmdk-root`:
+
+```css
+.bcmdk-root {
+	--bcmdk-primary: 0.205 0 0;
+	--bcmdk-primary-foreground: 0.985 0 0;
+	--bcmdk-muted: 0.97 0 0;
+	--bcmdk-border: 0.922 0 0;
+	--bcmdk-radius: 0.625rem;
+}
+```
+
+Then layer local overrides through `className` and your usual Tailwind utilities.

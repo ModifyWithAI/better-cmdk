@@ -1,23 +1,14 @@
 import type { NextConfig } from "next";
 
+const docsOrigin =
+	process.env.DOCS_ORIGIN ??
+	(process.env.NODE_ENV === "development"
+		? "http://127.0.0.1:3050"
+		: "https://docs.better-cmdk.com");
+
 const nextConfig: NextConfig = {
 	/* config options here */
 	reactCompiler: true,
-	async redirects() {
-		return [
-			{
-				source: "/:path*",
-				has: [
-					{
-						type: "host",
-						value: "docs.better-cmdk.com",
-					},
-				],
-				destination: "https://better-cmdk.com/docs/:path*",
-				permanent: true,
-			},
-		];
-	},
 	async rewrites() {
 		return [
 			{
@@ -30,11 +21,11 @@ const nextConfig: NextConfig = {
 			},
 			{
 				source: "/docs",
-				destination: "https://better-cmdk.mintlify.dev/docs",
+				destination: `${docsOrigin}/docs`,
 			},
 			{
 				source: "/docs/:match*",
-				destination: "https://better-cmdk.mintlify.dev/docs/:match*",
+				destination: `${docsOrigin}/docs/:match*`,
 			},
 		];
 	},
